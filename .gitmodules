@@ -1,0 +1,3 @@
+[submodule "chatmail-core"]
+	path = chatmail-core
+	url = git@github.com:chatmail/core.git
