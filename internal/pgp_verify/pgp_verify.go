@@ -53,12 +53,13 @@ func IsSecureJoinMessage(header textproto.Header, body io.Reader) bool {
 	secureJoinHeader := header.Get("Secure-Join")
 	contentType := header.Get("Content-Type")
 
-	// Quick check - if header indicates secure join, allow it
-	if strings.EqualFold(secureJoinHeader, "vc-request") || strings.EqualFold(secureJoinHeader, "vg-request") {
-		return true
+	// Require Secure-Join header to be exactly vc-request or vg-request
+	if !(strings.EqualFold(secureJoinHeader, "vc-request") ||
+		strings.EqualFold(secureJoinHeader, "vg-request")) {
+		return false
 	}
 
-	// If no header, check the body (Delta Chat sometimes relies on body content)
+	// Check content type for multipart/
 	if !strings.HasPrefix(strings.ToLower(contentType), "multipart/") {
 		return false
 	}
@@ -68,11 +69,12 @@ func IsSecureJoinMessage(header textproto.Header, body io.Reader) bool {
 		return false
 	}
 
-	if mediatype != "multipart/mixed" && mediatype != "multipart/alternative" {
+	// Only accept multipart/mixed
+	if mediatype != "multipart/mixed" {
 		return false
 	}
 
-	// Parse multipart message to look for secure-join string
+	// Parse multipart message
 	mpr := multipart.NewReader(body, params["boundary"])
 	partsCount := 0
 
@@ -86,29 +88,28 @@ func IsSecureJoinMessage(header textproto.Header, body io.Reader) bool {
 		}
 
 		partsCount++
-		if partsCount > 2 { // Don't look too far
-			break
+		if partsCount > 1 {
+			return false
 		}
 
 		partContentType := part.Header.Get("Content-Type")
-		if !strings.HasPrefix(partContentType, "text/plain") {
-			continue
+
+		if partContentType != "text/plain" {
+			return false
 		}
 
 		partBody, err := io.ReadAll(io.LimitReader(part, 8192)) // Read up to 8KB
 		if err != nil {
-			continue
+			return false
 		}
 
 		bodyStr := strings.ToLower(strings.TrimSpace(string(partBody)))
-		if strings.Contains(bodyStr, "secure-join: vc-request") ||
-			strings.Contains(bodyStr, "secure-join: vg-request") ||
-			strings.Contains(bodyStr, "securejoin") {
-			return true
+		if bodyStr != "secure-join: vc-request" && bodyStr != "secure-join: vg-request" {
+			return false
 		}
 	}
 
-	return false
+	return partsCount == 1
 }
 
 func IsValidEncryptedMessage(contentType string, body io.Reader) (bool, error) {
