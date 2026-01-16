@@ -68,7 +68,6 @@ func IsSecureJoinMessage(header textproto.Header, body io.Reader) bool {
 		return false
 	}
 
-	// Only accept multipart/mixed
 	if mediatype != "multipart/mixed" {
 		return false
 	}
