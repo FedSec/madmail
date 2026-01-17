@@ -136,14 +136,15 @@ type InstallConfig struct {
 	TurnOffTLS        bool
 
 	// System configuration
-	MaddyUser   string
-	MaddyGroup  string
-	ConfigDir   string
-	SystemdPath string
-	BinaryPath  string
-	LibexecDir  string
-	NoLog       bool
-	Debug       bool
+	MaddyUser      string
+	MaddyGroup     string
+	ConfigDir      string
+	SystemdPath    string
+	BinaryPath     string
+	LibexecDir     string
+	NoLog          bool
+	Debug          bool
+	MaxMessageSize string
 	// Internal state
 	SkipPrompts bool
 }
@@ -191,6 +192,7 @@ func defaultConfig() *InstallConfig {
 		EnableTURN:               true,
 		TURNPort:                 "3478",
 		TURNTTL:                  86400,
+		MaxMessageSize:           "32M",
 	}
 }
 
@@ -339,6 +341,11 @@ Examples:
 					Name:  "turn-secret",
 					Usage: "TURN server shared secret",
 				},
+				&cli.StringFlag{
+					Name:  "max-message-size",
+					Usage: "Maximum message size (e.g. 32M, 100M)",
+					Value: "32M",
+				},
 			},
 		})
 }
@@ -459,6 +466,10 @@ func installCommand(ctx *cli.Context) error {
 	}
 	if ctx.IsSet("turn-secret") {
 		config.TURNSecret = ctx.String("turn-secret")
+	}
+
+	if ctx.IsSet("max-message-size") {
+		config.MaxMessageSize = ctx.String("max-message-size")
 	}
 
 	// Run interactive configuration if not in non-interactive mode
@@ -731,6 +742,10 @@ func runInteractiveConfig(config *InstallConfig) error {
 			config.PGPPassthroughRecipients = strings.Split(strings.ReplaceAll(passthroughRecipients, " ", ""), ",")
 		}
 	}
+
+	// Message size limit
+	fmt.Println("\n📦 Message Size Configuration")
+	config.MaxMessageSize = promptString("Maximum message size (e.g., 32M, 100M)", config.MaxMessageSize)
 
 	// DNS Provider Configuration
 	fmt.Println("\n🌐 DNS Provider Configuration")

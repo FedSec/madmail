@@ -32,6 +32,9 @@ coverage:
 build:
 	sh build.sh build
 
+test:
+	uv run python3 tests/deltachat-test/main.py
+
 # Helper to increment version
 bump_version:
 	@if [ -f $(VERSION_FILE) ]; then \
@@ -39,11 +42,10 @@ bump_version:
 		echo "Version bumped to $$(cat $(VERSION_FILE))"; \
 	fi
 
-# Local deployment test
-test: build
+install: build
 	sudo systemctl stop maddy.service 
 	@echo "Updating local instance (127.0.0.1)"
-	sudo ./$(BINARY) install --simple --debug --ip 127.0.0.1
+	sudo ./$(BINARY) install --simple --ip 127.0.0.1
 	sudo systemctl start maddy.service
 
 # Remote deployment helper
@@ -52,7 +54,7 @@ define deploy_remote
 	@echo "Updating remote instance ($(1))" 
 	ssh root@$(1) "sudo systemctl stop maddy.service || true"
 	ssh root@$(1) "sudo rm -f /usr/local/bin/maddy || true"
-	ssh root@$(1) "sudo ./maddy install --simple --debug --ip $(1) && sudo systemctl start maddy.service"
+	ssh root@$(1) "sudo ./maddy install --simple --ip $(1) && sudo systemctl start maddy.service"
 endef
 
 # Push to both servers

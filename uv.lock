@@ -1,0 +1,47 @@
+version = 1
+revision = 1
+requires-python = ">=3.12"
+
+[[package]]
+name = "deltachat-rpc-client"
+version = "2.37.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e8/18/bdb75462b462df3e5e3dfa1a6e846c03f3be7b4d31e1b0d10b0173b903dd/deltachat_rpc_client-2.37.0.tar.gz", hash = "sha256:f6b6d295ec72cd34b9f3db3e88d64dd0d1e45169cb1ad875f33e0c9e99dcc83f", size = 57862 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8b/fe/08609c2d48348296ba3c593174cb5edf4c880e7dd8f01c8ae3741b2a3aa7/deltachat_rpc_client-2.37.0-py3-none-any.whl", hash = "sha256:b7c17103ad610b358e4e9229fb7cc4394a077cb78f38fcfac8ae5f781f2bea95", size = 35480 },
+]
+
+[[package]]
+name = "madmail"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "deltachat-rpc-client" },
+    { name = "python-dotenv" },
+    { name = "toml" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "deltachat-rpc-client", specifier = ">=2.37.0" },
+    { name = "python-dotenv", specifier = ">=1.2.1" },
+    { name = "toml", specifier = ">=0.10.2" },
+]
+
+[[package]]
+name = "python-dotenv"
+version = "1.2.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f0/26/19cadc79a718c5edbec86fd4919a6b6d3f681039a2f6d66d14be94e75fb9/python_dotenv-1.2.1.tar.gz", hash = "sha256:42667e897e16ab0d66954af0e60a9caa94f0fd4ecf3aaf6d2d260eec1aa36ad6", size = 44221 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/14/1b/a298b06749107c305e1fe0f814c6c74aea7b2f1e10989cb30f544a1b3253/python_dotenv-1.2.1-py3-none-any.whl", hash = "sha256:b81ee9561e9ca4004139c6cbba3a238c32b03e4894671e181b671e8cb8425d61", size = 21230 },
+]
+
+[[package]]
+name = "toml"
+version = "0.10.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/be/ba/1f744cdc819428fc6b5084ec34d9b30660f6f9daaf70eead706e3203ec3c/toml-0.10.2.tar.gz", hash = "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f", size = 22253 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/44/6f/7120676b6d73228c96e17f1f794d8ab046fc910d781c8d151120c3f1569e/toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b", size = 16588 },
+]

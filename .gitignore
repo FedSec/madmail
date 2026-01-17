@@ -48,7 +48,11 @@ tests/maddy.cover
 tests/maddy
 
 .idea/
-tmp
 
 publish.sh
 publish/
+
+__pycache__
+*.pyc
+*.pyo
+tmp/

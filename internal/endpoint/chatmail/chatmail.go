@@ -30,6 +30,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	syslog "log"
 	"net"
 	"net/http"
 	"os"
@@ -64,6 +65,8 @@ type Endpoint struct {
 	addrs  []string
 	name   string
 	logger log.Logger
+
+	maxMessageSize string
 
 	// Domain configuration
 	mailDomain string // Domain for email addresses (e.g., something.com)
@@ -140,6 +143,7 @@ func (e *Endpoint) Init(cfg *config.Map) error {
 	cfg.String("ss_cipher", false, false, "aes-128-gcm", &e.ssCipher)
 	cfg.String("sharing_driver", false, false, "sqlite3", &e.sharingDriver)
 	cfg.StringList("sharing_dsn", false, false, nil, &e.sharingDSN)
+	cfg.String("max_message_size", false, false, "32M", &e.maxMessageSize)
 
 	// Get references to the authentication database and storage
 	var authDBName, storageName string
@@ -244,6 +248,13 @@ func (e *Endpoint) Init(cfg *config.Map) error {
 	// Priority 3: Static files and templates
 	e.mux.HandleFunc("/", e.handleStaticFiles)
 	e.serv.Handler = e.mux
+
+	// Silence TLS handshake errors and other HTTP server noise unless debug is enabled
+	if !e.logger.Debug {
+		e.serv.ErrorLog = syslog.New(io.Discard, "", 0)
+	} else {
+		e.serv.ErrorLog = syslog.New(e.logger.DebugWriter(), "http: ", 0)
+	}
 
 	for _, a := range e.addrs {
 		endp, err := config.ParseEndpoint(a)
@@ -524,6 +535,7 @@ func (e *Endpoint) handleStaticFiles(w http.ResponseWriter, r *http.Request) {
 			SSURL            string
 			STUNAddr         string
 			DefaultQuota     int64
+			MaxMessageSize   string
 			RegistrationOpen bool
 			TurnEnabled      bool
 		}{
@@ -536,6 +548,7 @@ func (e *Endpoint) handleStaticFiles(w http.ResponseWriter, r *http.Request) {
 			SSURL:            e.getShadowsocksURL(),
 			STUNAddr:         net.JoinHostPort(strings.Trim(e.webDomain, "[]"), "3478"),
 			DefaultQuota:     e.storage.GetDefaultQuota(),
+			MaxMessageSize:   e.maxMessageSize,
 			RegistrationOpen: func() bool { open, _ := e.authDB.IsRegistrationOpen(); return open }(),
 			TurnEnabled:      func() bool { enabled, _ := e.authDB.IsTurnEnabled(); return enabled }(),
 		}

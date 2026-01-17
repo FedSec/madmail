@@ -118,7 +118,23 @@ func (s *state) CheckBody(ctx context.Context, header textproto.Header, body buf
 	s.contentType = header.Get("Content-Type")
 	s.mimeFrom = header.Get("From")
 	s.secureJoin = header.Get("Secure-Join")
+	secureJoinInvitenumber := header.Get("Secure-Join-Invitenumber")
 	autoSubmitted := header.Get("Auto-Submitted")
+
+	// Check for Secure Join requests BEFORE any other checks
+	// The Secure-Join-Invitenumber header is the primary indicator from securejoin.rs
+	if s.c.allowSecureJoin {
+		if secureJoinInvitenumber != "" {
+			s.log.Msg("allowing secure join request (Secure-Join-Invitenumber header present)", "value", secureJoinInvitenumber)
+			return module.CheckResult{}
+		}
+		// Check Secure-Join header values (vc-*, vg-* prefixes)
+		sjLower := strings.ToLower(strings.TrimSpace(s.secureJoin))
+		if strings.HasPrefix(sjLower, "vc-") || strings.HasPrefix(sjLower, "vg-") {
+			s.log.Msg("allowing secure join request (Secure-Join header has valid value)", "value", s.secureJoin)
+			return module.CheckResult{}
+		}
+	}
 
 	// Check if sender is in passthrough list
 	if slices.Contains(s.c.passthroughSenders, s.mailFrom) {
@@ -227,6 +243,7 @@ func (s *state) CheckBody(ctx context.Context, header textproto.Header, body buf
 		}
 
 		if !isEncrypted {
+			s.log.DebugMsg("message not encrypted, checking for secure join", "content_type", s.contentType, "secure_join", s.secureJoin)
 			// Check if this is a secure join request - be more permissive here
 			if s.c.allowSecureJoin {
 				// Re-open body as IsValidEncryptedMessage consumed it
@@ -237,12 +254,15 @@ func (s *state) CheckBody(ctx context.Context, header textproto.Header, body buf
 					header.Set("Content-Type", s.contentType)
 					header.Set("Secure-Join", s.secureJoin)
 					if pgp_verify.IsSecureJoinMessage(header, r2) {
-						s.log.Msg("allowing secure join request", "recipient", recipient)
+						s.log.Msg("allowing secure join request", "recipient", recipient, "secure_join", s.secureJoin)
 						continue
 					}
+				} else {
+					s.log.Error("failed to re-open body for secure join check", err)
 				}
 			}
 
+			s.log.Msg("rejecting unencrypted message", "recipient", recipient, "sender", s.mailFrom, "content_type", s.contentType, "secure_join", s.secureJoin)
 			// Reject unencrypted message
 			return module.CheckResult{
 				Reject: true,

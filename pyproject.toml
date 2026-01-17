@@ -1,0 +1,11 @@
+[project]
+name = "madmail"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "deltachat-rpc-client>=2.37.0",
+    "python-dotenv>=1.2.1",
+    "toml>=0.10.2",
+]
