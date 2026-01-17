@@ -31,28 +31,14 @@ import (
 
 func IsAcceptedMessage(header textproto.Header, body io.Reader) (bool, error) {
 	contentType := header.Get("Content-Type")
-	secureJoin := header.Get("Secure-Join")
-	secureJoinInvitenumber := header.Get("Secure-Join-Invitenumber")
 
-	// 1. Check for Secure Join based on headers FIRST (before consuming body)
-	// The Secure-Join-Invitenumber header is the primary indicator of a secure join request
-	if secureJoinInvitenumber != "" {
-		return true, nil
-	}
-
-	// Check Secure-Join header values
-	sjLower := strings.ToLower(strings.TrimSpace(secureJoin))
-	if strings.HasPrefix(sjLower, "vc-") || strings.HasPrefix(sjLower, "vg-") {
-		return true, nil
-	}
-
-	// 2. Buffer the body so we can read it multiple times
+	// Buffer the body so we can read it multiple times
 	bodyData, err := io.ReadAll(body)
 	if err != nil {
 		return false, err
 	}
 
-	// 3. Check if it's a valid PGP encrypted message
+	// Check if it's a valid PGP encrypted message
 	isEncrypted, err := IsValidEncryptedMessage(contentType, bytes.NewReader(bodyData))
 	if err != nil {
 		return false, err
