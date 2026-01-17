@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/themadorg/madmail/framework/config"
+	"github.com/themadorg/madmail/framework/log"
 	"github.com/themadorg/madmail/framework/module"
 	"github.com/themadorg/madmail/internal/db"
 	"gorm.io/gorm"
@@ -45,7 +46,7 @@ func (g *GORMTable) Init(cfg *config.Map) error {
 		return err
 	}
 
-	database, err := db.New(driver, dsnParts)
+	database, err := db.New(driver, dsnParts, log.DefaultLogger.Debug)
 	if err != nil {
 		return err
 	}

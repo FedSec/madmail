@@ -30,6 +30,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	syslog "log"
 	"net"
 	"net/http"
 	"os"
@@ -64,6 +65,8 @@ type Endpoint struct {
 	addrs  []string
 	name   string
 	logger log.Logger
+
+	maxMessageSize string
 
 	// Domain configuration
 	mailDomain string // Domain for email addresses (e.g., something.com)
@@ -140,6 +143,7 @@ func (e *Endpoint) Init(cfg *config.Map) error {
 	cfg.String("ss_cipher", false, false, "aes-128-gcm", &e.ssCipher)
 	cfg.String("sharing_driver", false, false, "sqlite3", &e.sharingDriver)
 	cfg.StringList("sharing_dsn", false, false, nil, &e.sharingDSN)
+	cfg.String("max_message_size", false, false, "32M", &e.maxMessageSize)
 
 	// Get references to the authentication database and storage
 	var authDBName, storageName string
@@ -179,7 +183,7 @@ func (e *Endpoint) Init(cfg *config.Map) error {
 			dsn = []string{filepath.Join(config.StateDirectory, "sharing.db")}
 		}
 
-		gdb, err := mdb.New(driver, dsn)
+		gdb, err := mdb.New(driver, dsn, e.logger.Debug)
 		if err != nil {
 			return fmt.Errorf("%s: failed to open sharing GORM DB: %v", modName, err)
 		}
@@ -244,6 +248,13 @@ func (e *Endpoint) Init(cfg *config.Map) error {
 	// Priority 3: Static files and templates
 	e.mux.HandleFunc("/", e.handleStaticFiles)
 	e.serv.Handler = e.mux
+
+	// Silence TLS handshake errors and other HTTP server noise unless debug is enabled
+	if !e.logger.Debug {
+		e.serv.ErrorLog = syslog.New(io.Discard, "", 0)
+	} else {
+		e.serv.ErrorLog = syslog.New(e.logger.DebugWriter(), "http: ", 0)
+	}
 
 	for _, a := range e.addrs {
 		endp, err := config.ParseEndpoint(a)
@@ -524,6 +535,7 @@ func (e *Endpoint) handleStaticFiles(w http.ResponseWriter, r *http.Request) {
 			SSURL            string
 			STUNAddr         string
 			DefaultQuota     int64
+			MaxMessageSize   string
 			RegistrationOpen bool
 			TurnEnabled      bool
 		}{
@@ -536,6 +548,7 @@ func (e *Endpoint) handleStaticFiles(w http.ResponseWriter, r *http.Request) {
 			SSURL:            e.getShadowsocksURL(),
 			STUNAddr:         net.JoinHostPort(strings.Trim(e.webDomain, "[]"), "3478"),
 			DefaultQuota:     e.storage.GetDefaultQuota(),
+			MaxMessageSize:   e.maxMessageSize,
 			RegistrationOpen: func() bool { open, _ := e.authDB.IsRegistrationOpen(); return open }(),
 			TurnEnabled:      func() bool { enabled, _ := e.authDB.IsTurnEnabled(); return enabled }(),
 		}
@@ -653,7 +666,11 @@ func (e *Endpoint) handleReceiveEmail(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-	defer delivery.Abort(r.Context())
+	defer func() {
+		if err := delivery.Abort(r.Context()); err != nil {
+			e.logger.Error("failed to abort delivery", err)
+		}
+	}()
 
 	anyAccepted := false
 	for _, to := range mailTo {
@@ -975,27 +992,6 @@ func parseALPN(data []byte) string {
 	return ""
 }
 
-func (e *Endpoint) proxy(c1 net.Conn, addr string) {
-	defer c1.Close()
-	c2, err := net.Dial("tcp", addr)
-	if err != nil {
-		e.logger.Error("ALPN proxy: failed to dial target", err, "target", addr)
-		return
-	}
-	defer c2.Close()
-
-	done := make(chan struct{}, 2)
-	go func() {
-		io.Copy(c2, c1)
-		done <- struct{}{}
-	}()
-	go func() {
-		io.Copy(c1, c2)
-		done <- struct{}{}
-	}()
-	<-done
-}
-
 type multiplexedListener struct {
 	net.Listener
 	conns chan net.Conn
@@ -1112,22 +1108,13 @@ func (e *Endpoint) handleContactShare(w http.ResponseWriter, r *http.Request) {
 
 	if r.Header.Get("Accept") == "application/json" {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(data)
+		if err := json.NewEncoder(w).Encode(data); err != nil {
+			e.logger.Error("failed to encode contact share response", err)
+		}
 		return
 	}
 
 	e.serveTemplate(w, r, "contact_share_success.html", data)
-}
-
-func (e *Endpoint) handleContactList(w http.ResponseWriter, r *http.Request) {
-	var contacts []mdb.Contact
-	err := e.sharingGORM.Order("created_at DESC").Limit(100).Find(&contacts).Error
-	if err != nil {
-		http.Error(w, "Internal error", http.StatusInternalServerError)
-		return
-	}
-
-	e.serveTemplate(w, r, "contact_list.html", contacts)
 }
 
 func (e *Endpoint) renderContactView(w http.ResponseWriter, r *http.Request, slug, url, name string) {

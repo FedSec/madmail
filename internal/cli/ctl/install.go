@@ -67,9 +67,6 @@ func silentPrintln(noLog bool, a ...interface{}) {
 	}
 }
 
-//go:embed dns.zone.j2
-var dnsZoneTemplate string
-
 //go:embed maddy.conf.j2
 var maddyConfigTemplate string
 
@@ -136,14 +133,15 @@ type InstallConfig struct {
 	TurnOffTLS        bool
 
 	// System configuration
-	MaddyUser   string
-	MaddyGroup  string
-	ConfigDir   string
-	SystemdPath string
-	BinaryPath  string
-	LibexecDir  string
-	NoLog       bool
-	Debug       bool
+	MaddyUser      string
+	MaddyGroup     string
+	ConfigDir      string
+	SystemdPath    string
+	BinaryPath     string
+	LibexecDir     string
+	NoLog          bool
+	Debug          bool
+	MaxMessageSize string
 	// Internal state
 	SkipPrompts bool
 }
@@ -191,6 +189,7 @@ func defaultConfig() *InstallConfig {
 		EnableTURN:               true,
 		TURNPort:                 "3478",
 		TURNTTL:                  86400,
+		MaxMessageSize:           "32M",
 	}
 }
 
@@ -339,6 +338,11 @@ Examples:
 					Name:  "turn-secret",
 					Usage: "TURN server shared secret",
 				},
+				&cli.StringFlag{
+					Name:  "max-message-size",
+					Usage: "Maximum message size (e.g. 32M, 100M)",
+					Value: "32M",
+				},
 			},
 		})
 }
@@ -459,6 +463,10 @@ func installCommand(ctx *cli.Context) error {
 	}
 	if ctx.IsSet("turn-secret") {
 		config.TURNSecret = ctx.String("turn-secret")
+	}
+
+	if ctx.IsSet("max-message-size") {
+		config.MaxMessageSize = ctx.String("max-message-size")
 	}
 
 	// Run interactive configuration if not in non-interactive mode
@@ -600,7 +608,9 @@ func runInteractiveConfig(config *InstallConfig) error {
 		// Generate a random password for Shadowsocks if it's enabled and not set
 		if config.EnableSS && config.SSPassword == "" {
 			b := make([]byte, 16)
-			rand.Read(b)
+			if _, err := rand.Read(b); err != nil {
+				return fmt.Errorf("failed to generate shadowsocks password: %v", err)
+			}
 			config.SSPassword = base64.RawURLEncoding.EncodeToString(b)
 		}
 
@@ -610,7 +620,9 @@ func runInteractiveConfig(config *InstallConfig) error {
 			}
 			if config.TURNSecret == "" {
 				b := make([]byte, 16)
-				rand.Read(b)
+				if _, err := rand.Read(b); err != nil {
+					return fmt.Errorf("failed to generate TURN secret: %v", err)
+				}
 				config.TURNSecret = base64.RawURLEncoding.EncodeToString(b)
 			}
 		}
@@ -686,7 +698,9 @@ func runInteractiveConfig(config *InstallConfig) error {
 	if config.SSPassword == "" {
 		// Generate a random password if not set
 		b := make([]byte, 16)
-		rand.Read(b)
+		if _, err := rand.Read(b); err != nil {
+			return fmt.Errorf("failed to generate shadowsocks password: %v", err)
+		}
 		config.SSPassword = base64.RawURLEncoding.EncodeToString(b)
 	}
 	config.EnableSS = clitools2.Confirmation("Enable Shadowsocks proxy for faster messaging?", config.EnableSS)
@@ -707,7 +721,9 @@ func runInteractiveConfig(config *InstallConfig) error {
 		config.TURNPort = promptString("TURN server port", config.TURNPort)
 		if config.TURNSecret == "" {
 			b := make([]byte, 16)
-			rand.Read(b)
+			if _, err := rand.Read(b); err != nil {
+				return fmt.Errorf("failed to generate TURN secret: %v", err)
+			}
 			config.TURNSecret = base64.RawURLEncoding.EncodeToString(b)
 		}
 		config.TURNSecret = promptString("TURN server shared secret", config.TURNSecret)
@@ -731,6 +747,10 @@ func runInteractiveConfig(config *InstallConfig) error {
 			config.PGPPassthroughRecipients = strings.Split(strings.ReplaceAll(passthroughRecipients, " ", ""), ",")
 		}
 	}
+
+	// Message size limit
+	fmt.Println("\n📦 Message Size Configuration")
+	config.MaxMessageSize = promptString("Maximum message size (e.g., 32M, 100M)", config.MaxMessageSize)
 
 	// DNS Provider Configuration
 	fmt.Println("\n🌐 DNS Provider Configuration")
@@ -1039,8 +1059,12 @@ func setupCertificates(config *InstallConfig, dryRun bool) error {
 	if err == nil {
 		uid, _ := strconv.Atoi(maddyUser.Uid)
 		gid, _ := strconv.Atoi(maddyUser.Gid)
-		os.Chown(config.TLSCertPath, uid, gid)
-		os.Chown(config.TLSKeyPath, uid, gid)
+		if err := os.Chown(config.TLSCertPath, uid, gid); err != nil {
+			logger.Printf("Warning: failed to set ownership for %s: %v", config.TLSCertPath, err)
+		}
+		if err := os.Chown(config.TLSKeyPath, uid, gid); err != nil {
+			logger.Printf("Warning: failed to set ownership for %s: %v", config.TLSKeyPath, err)
+		}
 	}
 
 	fmt.Printf("     ✓ Certificates generated successfully\n")

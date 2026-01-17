@@ -21,16 +21,17 @@ package turn
 import (
 	"crypto/hmac"
 	"crypto/sha1"
+	"crypto/tls"
 	"encoding/base64"
 	"fmt"
 	"net"
 	"strconv"
-	"sync"
 
 	"github.com/pion/logging"
 	"github.com/pion/stun/v3"
 	"github.com/pion/turn/v4"
 	"github.com/themadorg/madmail/framework/config"
+	tls2 "github.com/themadorg/madmail/framework/config/tls"
 	"github.com/themadorg/madmail/framework/log"
 	"github.com/themadorg/madmail/framework/module"
 )
@@ -46,8 +47,9 @@ type Endpoint struct {
 	secret  string
 	relayIP net.IP
 
-	listenersWg sync.WaitGroup
-	Log         log.Logger
+	tlsConfig *tls.Config
+
+	Log log.Logger
 }
 
 func (endp *Endpoint) Name() string {
@@ -153,7 +155,9 @@ func (endp *Endpoint) Init(cfg *config.Map) error {
 	cfg.String("realm", true, true, "", &endp.realm)
 	cfg.String("secret", true, true, "", &endp.secret)
 	cfg.String("relay_ip", false, false, "", &relayIP)
+	cfg.Custom("tls", false, false, nil, tls2.TLSDirective, &endp.tlsConfig)
 	cfg.Bool("debug", true, false, &endp.Log.Debug)
+	endp.Log.Debugf("TURN: Init called")
 	if _, err := cfg.Process(); err != nil {
 		return err
 	}
@@ -220,12 +224,22 @@ func (endp *Endpoint) Init(cfg *config.Map) error {
 			if err != nil {
 				return err
 			}
+
+			if addr.IsTLS() {
+				if endp.tlsConfig == nil {
+					return fmt.Errorf("turn: TLS configured for %s but no tls directive found", addr)
+				}
+				l = tls.NewListener(l, endp.tlsConfig)
+				endp.Log.Printf("listening on %v (TURNS/TLS)", addr)
+			} else {
+				endp.Log.Printf("listening on %v (TCP)", addr)
+			}
+
 			endp.listeners = append(endp.listeners, l)
 			listenerConfigs = append(listenerConfigs, turn.ListenerConfig{
 				Listener:              l,
 				RelayAddressGenerator: gen,
 			})
-			endp.Log.Printf("listening on %v (TCP)", addr)
 		} else if addr.Network() == "udp" {
 			packetConn, err := net.ListenPacket("udp", addr.Address())
 			if err != nil {

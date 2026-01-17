@@ -71,11 +71,12 @@ type Endpoint struct {
 	storageNormalize authz.NormalizeFunc
 	storageMap       module.Table
 
-	enableTURN bool
-	turnServer string
-	turnPort   int
-	turnSecret string
-	turnTTL    int
+	enableTURN    bool
+	turnServer    string
+	turnPort      int
+	turnSecret    string
+	turnTTL       int
+	turnPreferTLS bool
 
 	Log log.Logger
 }
@@ -122,6 +123,7 @@ func (endp *Endpoint) Init(cfg *config.Map) error {
 	cfg.Int("turn_port", false, false, 3478, &endp.turnPort)
 	cfg.String("turn_secret", false, false, "", &endp.turnSecret)
 	cfg.Int("turn_ttl", false, false, 86400, &endp.turnTTL)
+	cfg.Bool("turn_prefer_tls", true, true, &endp.turnPreferTLS)
 
 	if _, err := cfg.Process(); err != nil {
 		return err
@@ -416,7 +418,7 @@ func (h *getQuotaHandler) Handle(conn imapserver.Conn) error {
 	maxKB := max / 1024
 
 	// RFC 2087: * QUOTA "ROOT" (STORAGE 10 512)
-	conn.WriteResp(&imap.DataResp{
+	if err := conn.WriteResp(&imap.DataResp{
 		Fields: []interface{}{
 			imap.RawString("QUOTA"),
 			"ROOT",
@@ -426,7 +428,9 @@ func (h *getQuotaHandler) Handle(conn imapserver.Conn) error {
 				uint32(maxKB),
 			},
 		},
-	})
+	}); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -465,17 +469,19 @@ func (h *getQuotaRootHandler) Handle(conn imapserver.Conn) error {
 	}
 
 	// For simplicity, we only have one quota root which is "ROOT"
-	conn.WriteResp(&imap.DataResp{
+	if err := conn.WriteResp(&imap.DataResp{
 		Fields: []interface{}{
 			imap.RawString("QUOTAROOT"),
 			h.mailbox,
 			"ROOT",
 		},
-	})
+	}); err != nil {
+		return err
+	}
 
 	usedKB := used / 1024
 	maxKB := max / 1024
-	conn.WriteResp(&imap.DataResp{
+	if err := conn.WriteResp(&imap.DataResp{
 		Fields: []interface{}{
 			imap.RawString("QUOTA"),
 			"ROOT",
@@ -485,7 +491,9 @@ func (h *getQuotaRootHandler) Handle(conn imapserver.Conn) error {
 				uint32(maxKB),
 			},
 		},
-	})
+	}); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -618,7 +626,7 @@ func (h *getMetadataHandler) Handle(conn imapserver.Conn) error {
 
 	for _, key := range h.keys {
 		h.endp.Log.Debugf("GETMETADATA: checking key %q", key)
-		if h.mailbox == "" && key == "/shared/vendor/deltachat/turn" {
+		if h.mailbox == "" && (key == "/shared/vendor/deltachat/turn" || key == "/shared/vendor/deltachat/turns") {
 			if !turnEnabled {
 				continue
 			}
@@ -629,15 +637,17 @@ func (h *getMetadataHandler) Handle(conn imapserver.Conn) error {
 			password := base64.StdEncoding.EncodeToString(mac.Sum(nil))
 
 			value := fmt.Sprintf("%s:%d:%s:%s", h.endp.turnServer, h.endp.turnPort, username, password)
-			h.endp.Log.Debugf("GETMETADATA: sending TURN info: %s", value)
+			h.endp.Log.Debugf("GETMETADATA: sending %s info: %s", key, value)
 
-			conn.WriteResp(&imap.DataResp{
+			if err := conn.WriteResp(&imap.DataResp{
 				Fields: []interface{}{
 					imap.RawString("METADATA"),
 					h.mailbox,
 					[]interface{}{imap.RawString(key), value},
 				},
-			})
+			}); err != nil {
+				return err
+			}
 		}
 	}
 

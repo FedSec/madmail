@@ -57,6 +57,7 @@ storage.imapsql local_mailboxes {
     dsn imapsql.db
     retention 24h
     default_quota 1G
+    appendlimit {{.MaxMessageSize}}
 }
 
 # ----------------------------------------------------------------------------
@@ -99,6 +100,8 @@ smtp tcp://0.0.0.0:{{.SMTPPort}} {
         all concurrency 10
     }
 
+    max_message_size {{.MaxMessageSize}}
+
     dmarc yes
     check {
         require_tls
@@ -125,6 +128,8 @@ submission tls://0.0.0.0:{{.SubmissionTLS}} tcp://0.0.0.0:{{.SubmissionPort}} {
         # Up to 50 msgs/sec across any amount of SMTP connections.
         all rate 50 1s
     }
+
+    max_message_size {{.MaxMessageSize}}
 
     auth &local_authdb
     insecure_auth {{if .AllowInsecureAuth}}yes{{else}}no{{end}}
