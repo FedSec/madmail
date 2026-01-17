@@ -179,7 +179,7 @@ func (e *Endpoint) Init(cfg *config.Map) error {
 			dsn = []string{filepath.Join(config.StateDirectory, "sharing.db")}
 		}
 
-		gdb, err := mdb.New(driver, dsn)
+		gdb, err := mdb.New(driver, dsn, e.logger.Debug)
 		if err != nil {
 			return fmt.Errorf("%s: failed to open sharing GORM DB: %v", modName, err)
 		}

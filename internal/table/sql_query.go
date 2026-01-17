@@ -23,6 +23,7 @@ import (
 	"fmt"
 
 	"github.com/themadorg/madmail/framework/config"
+	"github.com/themadorg/madmail/framework/log"
 	"github.com/themadorg/madmail/framework/module"
 	mdb "github.com/themadorg/madmail/internal/db"
 	"gorm.io/gorm"
@@ -89,7 +90,7 @@ func (s *SQL) Init(cfg *config.Map) error {
 		return config.NodeErr(cfg.Block, "PostgreSQL driver does not support named_args")
 	}
 
-	db, err := mdb.New(driver, dsnParts)
+	db, err := mdb.New(driver, dsnParts, log.DefaultLogger.Debug)
 	if err != nil {
 		return config.NodeErr(cfg.Block, "failed to open db: %v", err)
 	}

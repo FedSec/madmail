@@ -296,7 +296,7 @@ func (store *Storage) Init(cfg *config.Map) error {
 		go store.cleanupLoop()
 	}
 
-	store.GORMDB, err = mdb.New(driver, dsn)
+	store.GORMDB, err = mdb.New(driver, dsn, store.Log.Debug)
 	if err != nil {
 		return fmt.Errorf("imapsql: gorm init failed: %w", err)
 	}
