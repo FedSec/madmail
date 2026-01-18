@@ -36,3 +36,4 @@ Welcome to the Madmail documentation. This page serves as a central hub for all 
 - **[Development Guide](./DEVELOPMENT.md)** - Common developer tasks (tidy, lint, test) and make targets.
 - **[Hacking Madmail](./HACKING.md)** - Design goals, module architecture, and contribution guidelines.
 - **[Style Guide](./STYLEGUIDE.md)** - Lightweight checklist for documentation voice, tone, and formatting.
+- **[AI Disclosure](./ai-disclosure.md)** - Transparency regarding AI-assisted development and our security model.

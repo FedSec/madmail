@@ -4,6 +4,9 @@ A mad fork of [maddy](https://github.com/foxcpp/maddy), bringing the madness to 
 ## Documentation
 For installation, configuration, and detailed guides, please refer to the [**Documentation Index**](./docs/index.md).
 
+> [!IMPORTANT]
+> Parts of this project are developed with AI assistance. Read our [**AI Disclosure & Security Model**](./docs/ai-disclosure.md) for more details.
+
 ## Resources
 - [GitHub Releases](https://github.com/themadorg/madmail/releases)
 - [Telegram Channel](https://t.me/the_madmail)
