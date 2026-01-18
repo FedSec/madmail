@@ -22,6 +22,7 @@ Welcome to the Madmail documentation. This page serves as a central hub for all 
 - **[Outbound Security](./seclevels.md)** - Understanding MX authentication and TLS enforcement policies.
 - **[F.A.Q.](./faq.md)** - Common issues, resource usage, and comparisons with other mail servers.
 - **[Release Process](./RELEASES.md)** - Information for maintainers on tags, GoReleaser, and GitHub Actions.
+- **[Binary Verification](./binary-verification.md)** - SHA256 hashes for all releases and verification instructions.
 
 ## 📚 Advanced Tutorials
 - **[Remote MX Forwarding](./tutorials/alias-to-remote.md)** - How to (and why you shouldn't) forward messages to remote servers.
