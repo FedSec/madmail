@@ -21,8 +21,9 @@ Welcome to the Madmail documentation. This page serves as a central hub for all 
 - **[Multiple Domains](./multiple-domains.md)** - Configuring account isolation vs. shared namespaces across domains.
 - **[Outbound Security](./seclevels.md)** - Understanding MX authentication and TLS enforcement policies.
 - **[F.A.Q.](./faq.md)** - Common issues, resource usage, and comparisons with other mail servers.
-- **[Release Process](./RELEASES.md)** - Information for maintainers on tags, GoReleaser, and GitHub Actions.
+- **[Release Process](../RELEASES.md)** - Information for maintainers on tags, GoReleaser, and GitHub Actions.
 - **[Binary Verification](./binary-verification.md)** - SHA256 hashes for all releases and verification instructions.
+- **[Signature Verification](./signature.md)** - Technical details on Ed25519 digital signatures and `maddy upgrade` mechanism.
 
 ## 📚 Advanced Tutorials
 - **[Remote MX Forwarding](./tutorials/alias-to-remote.md)** - How to (and why you shouldn't) forward messages to remote servers.
@@ -34,6 +35,7 @@ Welcome to the Madmail documentation. This page serves as a central hub for all 
 - **[SQLite Optimization](./internals/sqlite.md)** - WAL mode, auto-vacuuming, and performance notes for the SQLite backend.
 - **[Unicode Support](./internals/unicode.md)** - Internal UTF-8 handling, internationalized domains, and PRECIS profiles.
 - **[Development Guide](./DEVELOPMENT.md)** - Common developer tasks (tidy, lint, test) and make targets.
-- **[Hacking Madmail](./HACKING.md)** - Design goals, module architecture, and contribution guidelines.
+- **[Hacking Madmail](../HACKING.md)** - Design goals, module architecture, and core philosophy.
+- **[Detailed Contribution Guide](./contributing.md)** - Branching strategy, PR workflow, and AI responsibility.
 - **[Style Guide](./STYLEGUIDE.md)** - Lightweight checklist for documentation voice, tone, and formatting.
 - **[AI Disclosure](./ai-disclosure.md)** - Transparency regarding AI-assisted development and our security model.

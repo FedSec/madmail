@@ -26,7 +26,7 @@ Thank you for your interest in contributing to Madmail! We welcome contributions
 ## Key Rules
 
 - **Privacy First**: Madmail is a privacy-focused server. Avoid any changes that introduce unnecessary logging of user data.
-- **Security**: All releases are digitally signed. If you are adding core functionality, ensure it doesn't break the upgrade mechanism. For reporting vulnerabilities, see our [Security Policy](.github/SECURITY.md).
+- **Security**: All releases are digitally signed. If you are adding core functionality, ensure it doesn't break the upgrade mechanism. For reporting vulnerabilities, see our [Security Policy](SECURITY.md).
 - **AI Responsibility**: If you use AI to assist in coding, you MUST manually audit every line. You must fully understand how the code works and be able to explain it. Blindly committing AI-generated code is not allowed. See [AI Disclosure](docs/ai-disclosure.md).
 - **Testing**: New features or bug fixes MUST include a corresponding test case. See [E2E Testing Guide](docs/chatmail/e2e_test.md).
 - **Commit Messages**: We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification (e.g., `feat: add encryption`, `fix: handle null pointer`).
@@ -39,7 +39,8 @@ Thank you for your interest in contributing to Madmail! We welcome contributions
 3. **Check Branching Strategy**:
    - Use `feat/branch-name` for new features.
    - Use `fix/branch-name` for bug fixes.
-4. **Security Audit**: If your change involves security, check our [Security Policy](.github/SECURITY.md).
+   - Use `docs/branch-name` for documentation changes.
+4. **Security Audit**: If your change involves security, check our [Security Policy](SECURITY.md).
 5. **Fork and Commit**: Fork the repository, create your branch, and commit your changes. Make sure tests pass!
 6. **Submit a Pull Request**: Submit a PR once your work is ready.
 

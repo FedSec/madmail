@@ -19,7 +19,7 @@ request. If you just have some questions about maddy - prefer to use the
 Issues without enough information will be ignored and possibly closed.
 Take some time to be as detailed as possible.
 
-See [SECURITY.md](SECURITY.md) for information on how to report vulnerabilities.
+See [SECURITY.md](../SECURITY.md) for information on how to report vulnerabilities.
 
 ## Contributing Code
 

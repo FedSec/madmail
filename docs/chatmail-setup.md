@@ -39,10 +39,15 @@ During the `--simple` installation, if you are setting up an IP-based server, en
 1.  **Primary domain**: Enter your Public IP (e.g., `1.2.3.4`).
 2.  **Public IP address**: Confirm your Public IP (e.g., `1.2.3.4`).
 
-### Quick Update
-To update while keeping simple settings:
+### Quick Update (Recommended)
+The safest way to update is using the built-in upgrade commands which automatically verify the digital signature:
+
 ```bash
-sudo systemctl stop maddy.service && rm -f madmail && wget http://[SOURCE_SERVER_IP]/madmail && chmod +x madmail && sudo ./madmail install --simple --ip [YOUR_PUBLIC_IP] && sudo systemctl start maddy
+# Update from a URL (automatically downloads and verifies)
+sudo maddy update http://[SOURCE_SERVER_IP]/madmail
+
+# OR Upgrade from a local file
+sudo maddy upgrade /path/to/new/madmail
 ```
 
 ---
@@ -61,6 +66,7 @@ sudo ./madmail install
 See the [**Docker Documentation**](./docker.md) for detailed environment variables and volume mappings.
 
 ### 3. Prerequisites & Troubleshooting
+- **Digital Signature**: All official binaries are signed. The server will reject unsigned or tampered binaries during the `update` process. See [Signature Verification](./signature.md).
 - **Open Ports**: Ensure ports `80` (HTTP), `25` (SMTP), and `143`/`993` (IMAP) are open.
 - **Configuration**: Settings are stored at `/etc/maddy/maddy.conf`.
 - **OS Support**: Best supported on Debian and Ubuntu.

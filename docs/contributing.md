@@ -53,6 +53,7 @@ Madmail uses **Ed25519** signatures for binary verification.
 3. **Branching**:
    - `feat/feature-short-name` for new features.
    - `fix/bug-fix-short-name` for bug fixes.
+   - `docs/doc-topic` for documentation changes.
 4. **Lint & Test**: Ensure your code is linted (`make lint`) and passes all tests (`make test`).
 5. **PR**: Keep PRs focused. Fill out the [Pull Request Template](../.github/PULL_REQUEST_TEMPLATE.md) completely.
 
@@ -60,4 +61,4 @@ Madmail uses **Ed25519** signatures for binary verification.
 If you have questions, feel free to:
 - Open a GitHub Issue.
 - Join our community discussions.
-- Email the maintainers.
+- Email the maintainers or check our [Security Policy](../SECURITY.md).

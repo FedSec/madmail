@@ -23,6 +23,11 @@ Get-FileHash madmail -Algorithm SHA256
 
 Compare the output string with the hashes listed below or in our official channels.
 
+> [!TIP]
+> **Preferred Method (v0.8.103+)**: Starting from version **v0.8.103**, we recommend using the built-in **[Digital Signature Verification](./signature.md)**. The `maddy update` command automatically performs this check for you. 
+> 
+> **For older versions**: Any version prior to v0.8.103 **must** be verified manually by checking its SHA256 hash against the list below.
+
 ## 📢 Official Sources
 - **Telegram Channel**: The latest binaries and their corresponding hashes are always posted in our [**Telegram Channel**](https://t.me/the_madmail). If you cannot access our file servers directly, you can always download the latest `madmail` binary from there.
 - **GitHub Releases**: Hashes for core releases are also available on the [GitHub Releases](https://github.com/themadorg/madmail/releases) page.

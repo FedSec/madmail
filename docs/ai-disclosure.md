@@ -22,6 +22,7 @@ The tests (located in [`tests/deltachat-test`](../tests/deltachat-test/)) cover 
 - **[File Transfers](../tests/deltachat-test/scenarios/test_06_file_transfer.py)** & **[Large Files](../tests/deltachat-test/scenarios/test_09_send_bigfile.py)**: Stress tests the SMTP/IMAP pipeline with binary data.
 - **[Federation](../tests/deltachat-test/scenarios/test_07_federation.py)**: Ensures cross-server communication works securely.
 - **[No-Log Verification](../tests/deltachat-test/scenarios/test_08_no_logging.py)**: Confirms that privacy settings are respected.
+- **[Binary Signature & Upgrade](../tests/deltachat-test/scenarios/test_10_upgrade_mechanism.py)**: Verifies the security and integrity of the auto-upgrade system.
 
 ### Contributor Responsibility
 Any contributor adding new features or modifying the core should add a corresponding test scenario in [`tests/deltachat-test/scenarios/`](../tests/deltachat-test/scenarios/). This collective auditing ensures that Madmail remains robust before every release.
