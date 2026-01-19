@@ -39,6 +39,17 @@ The JIT registration flag (`__JIT_REGISTRATION_ENABLED__`) controls automatic ac
 When a user is auto-registered during login, their IMAP mailbox is lazily provisioned on the first access or first mail delivery. 
 - **Delivery Hook**: `internal/storage/imapsql/delivery.go` also verifies JIT registration status to determine if a non-existent recipient should be auto-created during incoming mail delivery.
 
+## JIT vs API Registration
+
+Chatmail supports two primary ways of creating accounts:
+
+1.  **JIT (Just-In-Time)**: Triggered by a login attempt. 
+    - **Pros**: Zero friction for users.
+    - **Cons**: Can lead to "address squatting" or accidental account creation if the password doesn't match a intended policy.
+2.  **API-Based (`/new`)**: Triggered by a POST request to the web endpoint.
+    - **Pros**: Allows the server to control username generation and ensure uniqueness before the client attempts to login. 
+    - **Controlled Flow**: Even if `__JIT_REGISTRATION_ENABLED__` is `false`, the `/new` API will still work as long as `__REGISTRATION_OPEN__` is `true`. This allows operators to disable automatic creation on login while still allowing new users to sign up via the official web landing page.
+
 ## Management CLI
 Registration status can be toggled without restarting the server:
 ```bash
