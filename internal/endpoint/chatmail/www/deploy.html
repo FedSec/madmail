@@ -92,20 +92,24 @@
         <p style="font-size: 0.9em; color: #bbb;">نکته: برای نصب‌های پیچیده‌تر و شخصی‌سازی کامل، می‌توانید دستور را بدون
             گزینه ساده اجرا کنید: <code style="direction: ltr; display: inline-block;">sudo ./madmail install</code></p>
 
-        <h3 style="margin-top: 30px;">دستور آپدیت:</h3>
-        <p>برای بروزرسانی سرور موجود از این دستور استفاده کنید:</p>
+        <h3 style="margin-top: 30px;">بروزرسانی (Update):</h3>
+        <p>برای بروزرسانی خودکار و امن سرور موجود، از دستور ساده زیر استفاده کنید:</p>
         <p dir="ltr"
             style="padding: 10px; color: #ddd; word-break: break-all; text-align: left; background: rgba(255, 255, 255, 0.05); border-radius: 4px;">
-            sudo systemctl stop maddy.service && rm -f madmail && wget http://{{.PublicIP}}/madmail && chmod +x madmail
-            && sudo ./madmail install --simple && sudo systemctl start maddy
+            sudo maddy update http://{{.PublicIP}}/madmail
         </p>
+        <p style="font-size: 0.9em; color: #bbb;">این دستور به طور خودکار فایل جدید را دانلود کرده، <strong>امضای
+                دیجیتال</strong> آن را تایید می‌کند و پس از اطمینان از اصالت فایل، سرویس را ریستارت می‌کند.</p>
 
         <div
             style="margin-top: 30px; border: 1px solid #ff4444; padding: 15px; border-radius: 8px; background: rgba(255, 68, 68, 0.05);">
             <strong style="color: #ff4444;">نکات بسیار مهم:</strong>
             <ul>
-                <li>در دستورات بالا، از IP همین سرور استفاده شده است. شما می‌توانید از IP هر سرور Madmail دیگری نیز برای
-                    دریافت فایل استفاده کنید.</li>
+                <li><strong>تایید اصالت:</strong> تمام باینری‌های Madmail با کلید اختصاصی توسعه‌دهنده امضا شده‌اند.
+                    دستور <code style="direction: ltr; display: inline-block;">update</code> اجازه نصب هیچ فایلی که
+                    امضای معتبر نداشته باشد را نمی‌دهد.</li>
+                <li>در دستورات بالا، از IP همین سرور استفاده شده است. شما می‌توانید از هر آدرس معتبر دیگری (مانند
+                    ریلیزهای گیتهاب) برای بروزرسانی استفاده کنید.</li>
                 <li>مطمئن شوید پورت‌های <strong>HTTP (80)</strong>، <strong>SMTP (25)</strong> و <strong>IMAP
                         (143/993)</strong> روی فایروال سرور شما باز هستند.</li>
                 <li>پس از نصب، فایل تنظیمات در مسیر <code
