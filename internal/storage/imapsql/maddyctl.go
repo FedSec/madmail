@@ -46,7 +46,11 @@ func (store *Storage) CreateIMAPAcct(accountName string) error {
 	}
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		quota = mdb.Quota{Username: accountName, CreatedAt: time.Now().Unix()}
+		quota = mdb.Quota{
+			Username:     accountName,
+			CreatedAt:    time.Now().Unix(),
+			FirstLoginAt: 1,
+		}
 		return store.GORMDB.Create(&quota).Error
 	} else if quota.CreatedAt == 0 {
 		quota.CreatedAt = time.Now().Unix()

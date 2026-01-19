@@ -305,6 +305,11 @@ func (store *Storage) Init(cfg *config.Map) error {
 		return fmt.Errorf("imapsql: quota table init failed: %w", err)
 	}
 
+	if err := store.MigrateFirstLoginFromCreatedAt(); err != nil {
+		store.Log.Error("failed to migrate first login times", err)
+	}
+
+
 	return nil
 }
 
@@ -387,7 +392,12 @@ func (store *Storage) SetQuota(username string, max int64) error {
 	}
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		quota = mdb.Quota{Username: username, MaxStorage: max, CreatedAt: time.Now().Unix()}
+		quota = mdb.Quota{
+			Username:     username,
+			MaxStorage:   max,
+			CreatedAt:    time.Now().Unix(),
+			FirstLoginAt: 1,
+		}
 	} else {
 		quota.MaxStorage = max
 	}
@@ -423,6 +433,56 @@ func (store *Storage) GetAccountDate(username string) (created int64, err error)
 	}
 
 	return 0, nil
+}
+
+func (store *Storage) UpdateFirstLogin(username string) error {
+	var quota mdb.Quota
+	err := store.GORMDB.Where("username = ?", username).First(&quota).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil
+		}
+		return err
+	}
+
+	if quota.FirstLoginAt == 1 {
+		quota.FirstLoginAt = time.Now().Unix()
+		return store.GORMDB.Save(&quota).Error
+	}
+
+	return nil
+}
+
+func (store *Storage) MigrateFirstLoginFromCreatedAt() error {
+	now := time.Now().Unix()
+
+	err := store.GORMDB.Model(&mdb.Quota{}).
+		Where("created_at IS NULL OR created_at = 0").
+		Update("created_at", now).Error
+	if err != nil {
+		return err
+	}
+
+	var count int64
+	err = store.GORMDB.Model(&mdb.Quota{}).
+		Where("first_login_at IS NULL OR first_login_at = 0").
+		Count(&count).Error
+	if err != nil {
+		return fmt.Errorf("failed to check migration status: %w", err)
+	}
+
+	if count == 0 {
+		return nil
+	}
+
+	err = store.GORMDB.Model(&mdb.Quota{}).
+		Where("first_login_at IS NULL OR first_login_at = 0").
+		Update("first_login_at", now).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (store *Storage) GetStat() (totalStorage int64, accountsCount int, err error) {

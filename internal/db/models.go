@@ -6,9 +6,10 @@ import (
 
 // Quota represents the quotas table.
 type Quota struct {
-	Username   string `gorm:"primaryKey"`
-	MaxStorage int64
-	CreatedAt  int64
+	Username     string `gorm:"primaryKey"`
+	MaxStorage   int64
+	CreatedAt    int64
+	FirstLoginAt int64
 }
 
 // Contact represents the contacts table for contact sharing.

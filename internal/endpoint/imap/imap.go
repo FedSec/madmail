@@ -306,6 +306,13 @@ func (endp *Endpoint) Login(connInfo *imap.ConnInfo, username, password string) 
 	if err != nil {
 		return nil, err
 	}
+
+	if manageableStore, ok := endp.Store.(module.ManageableStorage); ok {
+		if err := manageableStore.UpdateFirstLogin(storageUsername); err != nil {
+			endp.Log.Error("failed to update first login time", err, "username", storageUsername)
+		}
+	}
+
 	return &encryptionWrapperUser{u}, nil
 }
 

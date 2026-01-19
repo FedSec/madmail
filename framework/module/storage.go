@@ -53,6 +53,7 @@ type ManageableStorage interface {
 	SetQuota(username string, max int64) error
 	ResetQuota(username string) error
 	GetAccountDate(username string) (created int64, err error)
+	UpdateFirstLogin(username string) error
 	GetDefaultQuota() int64
 	SetDefaultQuota(max int64) error
 	GetStat() (totalStorage int64, accountsCount int, err error)
