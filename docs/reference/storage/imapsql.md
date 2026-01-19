@@ -203,6 +203,59 @@ Available options:
 - `casefold`                Convert to lower case
 - `noop`                    Nothing
 
+---
+
+### retention _duration_
+
+Default: `0` (disabled)
+
+Automatically delete messages older than the specified duration. Cleanup runs every hour.
+
+Valid duration units: `h` (hours), `m` (minutes), `s` (seconds), `ms` (milliseconds).
+
+Example:
+```
+retention 480h  # 20 days
+```
+
+---
+
+### unused_account_retention _duration_
+
+Default: `0` (disabled)
+
+Automatically delete accounts that have never logged in (first_login_at = 1) and were created more than the specified duration ago. Cleanup runs every hour.
+
+**Requires** `auth_db` directive to be set.
+
+Accounts with first_login_at > 1 are protected from deletion (they have logged in at least once). During migration, legacy accounts (first_login_at = 0 or NULL) are protected by setting their first_login_at to the current time, ensuring they won't be deleted.
+
+Accounts are deleted from both storage and authentication database.
+
+Valid duration units: `h` (hours), `m` (minutes), `s` (seconds), `ms` (milliseconds).
+
+Example:
+```
+unused_account_retention 720h  # 30 days
+auth_db local_authdb
+```
+
+---
+
+### auth_db _string_
+
+Default: not set
+
+Name of the authentication database module to use for unused account cleanup. Required when `unused_account_retention` is set.
+
+Example:
+```
+unused_account_retention 30d
+auth_db local_authdb
+```
+
+---
+
 Note: On message delivery, recipient address is unconditionally normalized
 using `precis_casefold_email` function.
 

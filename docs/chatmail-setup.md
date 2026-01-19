@@ -427,7 +427,23 @@ The server is configured to only accept encrypted messages, ensuring privacy by 
 
 ### Automatic Cleanup
 
-Messages are automatically cleaned up after 20 days to minimize data retention.
+Messages are automatically cleaned up after the configured retention period to minimize data retention.
+
+Unused accounts (accounts that have never logged in) can also be automatically cleaned up. Configure this in `maddy.conf`:
+
+```maddy
+storage.imapsql local_mailboxes {
+    # ... other config ...
+    retention 480h  # 20 days
+    unused_account_retention 720h  # 30 days
+    auth_db local_authdb
+}
+```
+
+This will:
+- Delete messages older than 20 days (480 hours)
+- Delete accounts that never logged in (first_login_at = 1) and were created more than 30 days ago (720 hours)
+- Existing legacy accounts (first_login_at = 0 or NULL) are protected from deletion during migration by setting their first_login_at to the current time
 
 ## Monitoring and Maintenance
 
