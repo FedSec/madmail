@@ -670,7 +670,10 @@ func (e *Endpoint) handleReceiveEmail(w http.ResponseWriter, r *http.Request) {
 	}
 	defer func() {
 		if err := delivery.Abort(r.Context()); err != nil {
-			e.logger.Error("failed to abort delivery", err)
+			// Ignore error if transaction was already committed or rolled back
+			if !strings.Contains(err.Error(), "transaction has already been committed") {
+				e.logger.Error("failed to abort delivery", err)
+			}
 		}
 	}()
 
@@ -1166,14 +1169,14 @@ func (e *Endpoint) serveTemplate(w http.ResponseWriter, r *http.Request, name st
 
 	// Composite data including default fields
 	data := struct {
-		MailDomain       string
-		MXDomain         string
-		WebDomain        string
-		PublicIP         string
-		TurnOffTLS       bool
-		Version          string
-		SSURL            string
-		DefaultQuota     int64
+		MailDomain             string
+		MXDomain               string
+		WebDomain              string
+		PublicIP               string
+		TurnOffTLS             bool
+		Version                string
+		SSURL                  string
+		DefaultQuota           int64
 		RegistrationOpen       bool
 		JitRegistrationEnabled bool
 		Custom                 interface{}
