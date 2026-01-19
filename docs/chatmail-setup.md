@@ -65,7 +65,21 @@ sudo ./madmail install
 ### 2. Docker Deployment
 See the [**Docker Documentation**](./docker.md) for detailed environment variables and volume mappings.
 
-### 3. Prerequisites & Troubleshooting
+### 3. Managing JIT Registration
+JIT registration controls automatic account creation during login attempts and email delivery:
+
+```bash
+# Enable automatic account creation
+sudo maddy --config /etc/maddy/maddy.conf creds jit enable
+
+# Disable automatic account creation
+sudo maddy --config /etc/maddy/maddy.conf creds jit disable
+
+# Check JIT registration status
+sudo maddy --config /etc/maddy/maddy.conf creds jit status
+```
+
+### 4. Prerequisites & Troubleshooting
 - **Digital Signature**: All official binaries are signed. The server will reject unsigned or tampered binaries during the `update` process. See [Signature Verification](./signature.md).
 - **Open Ports**: Ensure ports `80` (HTTP), `25` (SMTP), and `143`/`993` (IMAP) are open.
 - **Configuration**: Settings are stored at `/etc/maddy/maddy.conf`.
