@@ -36,10 +36,11 @@ Thank you for your interest in contributing to Madmail! We welcome contributions
 
 1. **Check Project Priorities**: Visit our [Project Board](https://github.com/orgs/themadorg/projects/1) to see what we are currently focused on.
 2. **Open an Issue**: Before starting any work, open an **Issue** to discuss your idea. Get approval from the authors first.
-3. **Branching Strategy**:
+3. **Check Branching Strategy**:
    - Use `feat/branch-name` for new features.
    - Use `fix/branch-name` for bug fixes.
-4. **Fork and Commit**: Fork the repository, create your branch, and commit your changes. Make sure tests pass!
-5. **Submit a Pull Request**: Submit a PR once your work is ready.
+4. **Security Audit**: If your change involves security, check our [Security Policy](.github/SECURITY.md).
+5. **Fork and Commit**: Fork the repository, create your branch, and commit your changes. Make sure tests pass!
+6. **Submit a Pull Request**: Submit a PR once your work is ready.
 
 For more detailed information on our development workflow, coding standards, and project architecture, please refer to the **[Detailed Contribution Guide](docs/contributing.md)**.
