@@ -62,10 +62,14 @@ push: build
 	$(call deploy_remote,$(REMOTE1))
 	$(call deploy_remote,$(REMOTE2))
 
-# Publish to Telegram then Arvan (Increment version -> Build -> Script)
+# Publish to Telegram then GitHub (Increment version -> Build -> Sign -> Script)
 # Use ARGS="--publish-no-telegram" to skip Telegram.
-publish: bump_version build
+publish: bump_version build sign_binary
 	@bash publish.sh $(ARGS)
+
+sign_binary:
+	@echo "🔏 Signing binary with local private key..."
+	@uv run internal/cli/clitools/sign.py $(BINARY) ../imp/private_key.hex
 
 
 # Logs

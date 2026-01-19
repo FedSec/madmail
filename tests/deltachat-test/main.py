@@ -38,6 +38,7 @@ from scenarios import (
     test_07_federation,
     test_08_no_logging,
     test_09_send_bigfile,
+    test_10_upgrade_mechanism,
 )
 
 REMOTE1 = os.getenv("REMOTE1", "127.0.0.1")
@@ -74,6 +75,7 @@ def main():
     parser.add_argument("--test-7", action="store_true", help="Run Federation")
     parser.add_argument("--test-8", action="store_true", help="Run No Logging Test")
     parser.add_argument("--test-9", action="store_true", help="Run Big File Test (10-70MB)")
+    parser.add_argument("--test-10", action="store_true", help="Run Upgrade Mechanism Test")
     parser.add_argument("--all", action="store_true", help="Run all tests (default)")
     
     args = parser.parse_args()
@@ -81,7 +83,7 @@ def main():
     # If no specific tests selected, run all
     run_all = args.all or not any([
         args.test_1, args.test_2, args.test_3, args.test_4, 
-        args.test_5, args.test_6, args.test_7, args.test_8, args.test_9
+        args.test_5, args.test_6, args.test_7, args.test_8, args.test_9, args.test_10
     ])
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -224,6 +226,16 @@ def main():
                 test_09_send_bigfile.run(acc1, acc2, test_dir, (REMOTE1, REMOTE2))
                 print("✓ TEST #9 PASSED: Big file transfer timing completed")
             
+            # ==========================================
+            # TEST #10: Upgrade Mechanism
+            # ==========================================
+            if run_all or args.test_10:
+                print("\n" + "="*50)
+                print("TEST #10: Upgrade Mechanism")
+                print("="*50)
+                test_10_upgrade_mechanism.run(dc, REMOTE1, test_dir)
+                print("✓ TEST #10 PASSED: Upgrade/Update signature verification verified")
+
             # ==========================================
             # ALL TESTS COMPLETE
             # ==========================================
