@@ -95,7 +95,7 @@ func setupAuthForJIT(t *testing.T) *Auth {
 func TestIsJitRegistrationEnabled(t *testing.T) {
 	t.Run("returns true when explicitly enabled", func(t *testing.T) {
 		a := setupAuthForJIT(t)
-		a.settingsTable.(*mockMutableTable).SetKey("__JIT_REGISTRATION_ENABLED__", "true")
+		_ = a.settingsTable.(*mockMutableTable).SetKey("__JIT_REGISTRATION_ENABLED__", "true")
 
 		enabled, err := a.IsJitRegistrationEnabled()
 		if err != nil {
@@ -108,7 +108,7 @@ func TestIsJitRegistrationEnabled(t *testing.T) {
 
 	t.Run("returns false when explicitly disabled", func(t *testing.T) {
 		a := setupAuthForJIT(t)
-		a.settingsTable.(*mockMutableTable).SetKey("__JIT_REGISTRATION_ENABLED__", "false")
+		_ = a.settingsTable.(*mockMutableTable).SetKey("__JIT_REGISTRATION_ENABLED__", "false")
 
 		enabled, err := a.IsJitRegistrationEnabled()
 		if err != nil {
@@ -124,7 +124,7 @@ func TestIsJitRegistrationEnabled(t *testing.T) {
 		// Don't set JIT flag, should default to registration open
 
 		// Set registration open to true
-		a.settingsTable.(*mockMutableTable).SetKey("__REGISTRATION_OPEN__", "true")
+		_ = a.settingsTable.(*mockMutableTable).SetKey("__REGISTRATION_OPEN__", "true")
 		enabled, err := a.IsJitRegistrationEnabled()
 		if err != nil {
 			t.Fatalf("IsJitRegistrationEnabled returned error: %v", err)
@@ -134,7 +134,7 @@ func TestIsJitRegistrationEnabled(t *testing.T) {
 		}
 
 		// Set registration open to false
-		a.settingsTable.(*mockMutableTable).SetKey("__REGISTRATION_OPEN__", "false")
+		_ = a.settingsTable.(*mockMutableTable).SetKey("__REGISTRATION_OPEN__", "false")
 		enabled, err = a.IsJitRegistrationEnabled()
 		if err != nil {
 			t.Fatalf("IsJitRegistrationEnabled returned error: %v", err)
@@ -147,9 +147,9 @@ func TestIsJitRegistrationEnabled(t *testing.T) {
 	t.Run("uses settings table when available", func(t *testing.T) {
 		a := setupAuthForJIT(t)
 		// Set JIT flag in settings table
-		a.settingsTable.(*mockMutableTable).SetKey("__JIT_REGISTRATION_ENABLED__", "true")
+		_ = a.settingsTable.(*mockMutableTable).SetKey("__JIT_REGISTRATION_ENABLED__", "true")
 		// Set different value in main table (should be ignored)
-		a.table.(*mockMutableTable).SetKey("__JIT_REGISTRATION_ENABLED__", "false")
+		_ = a.table.(*mockMutableTable).SetKey("__JIT_REGISTRATION_ENABLED__", "false")
 
 		enabled, err := a.IsJitRegistrationEnabled()
 		if err != nil {
@@ -163,7 +163,7 @@ func TestIsJitRegistrationEnabled(t *testing.T) {
 	t.Run("uses main table when settings table not available", func(t *testing.T) {
 		a := setupAuthForJIT(t)
 		a.settingsTable = nil
-		a.table.(*mockMutableTable).SetKey("__JIT_REGISTRATION_ENABLED__", "true")
+		_ = a.table.(*mockMutableTable).SetKey("__JIT_REGISTRATION_ENABLED__", "true")
 
 		enabled, err := a.IsJitRegistrationEnabled()
 		if err != nil {
@@ -266,7 +266,7 @@ func TestSetJitRegistrationEnabled(t *testing.T) {
 func TestAuthPlain_WithJIT(t *testing.T) {
 	t.Run("creates user when JIT enabled and user doesn't exist", func(t *testing.T) {
 		a := setupAuthForJIT(t)
-		a.settingsTable.(*mockMutableTable).SetKey("__JIT_REGISTRATION_ENABLED__", "true")
+		_ = a.settingsTable.(*mockMutableTable).SetKey("__JIT_REGISTRATION_ENABLED__", "true")
 
 		// User doesn't exist in table
 		username := "newuser@example.com"
@@ -290,7 +290,7 @@ func TestAuthPlain_WithJIT(t *testing.T) {
 
 	t.Run("does not create user when JIT disabled and user doesn't exist", func(t *testing.T) {
 		a := setupAuthForJIT(t)
-		a.settingsTable.(*mockMutableTable).SetKey("__JIT_REGISTRATION_ENABLED__", "false")
+		_ = a.settingsTable.(*mockMutableTable).SetKey("__JIT_REGISTRATION_ENABLED__", "false")
 
 		// User doesn't exist in table
 		username := "newuser2@example.com"
@@ -321,17 +321,17 @@ func TestAuthPlain_WithJIT(t *testing.T) {
 		key, _ := precis.UsernameCaseMapped.CompareKey(auth.NormalizeUsername(username))
 
 		// Create user manually
-		a.table.(*mockMutableTable).SetKey(key, "sha256:U0FMVA==:8PDRAgaUqaLSk34WpYniXjaBgGM93Lc6iF4pw2slthw=")
+		_ = a.table.(*mockMutableTable).SetKey(key, "sha256:U0FMVA==:8PDRAgaUqaLSk34WpYniXjaBgGM93Lc6iF4pw2slthw=")
 
 		// Test with JIT enabled
-		a.settingsTable.(*mockMutableTable).SetKey("__JIT_REGISTRATION_ENABLED__", "true")
+		_ = a.settingsTable.(*mockMutableTable).SetKey("__JIT_REGISTRATION_ENABLED__", "true")
 		err := a.AuthPlain(username, password)
 		if err != nil {
 			t.Errorf("AuthPlain failed with JIT enabled: %v", err)
 		}
 
 		// Test with JIT disabled
-		a.settingsTable.(*mockMutableTable).SetKey("__JIT_REGISTRATION_ENABLED__", "false")
+		_ = a.settingsTable.(*mockMutableTable).SetKey("__JIT_REGISTRATION_ENABLED__", "false")
 		err = a.AuthPlain(username, password)
 		if err != nil {
 			t.Errorf("AuthPlain failed with JIT disabled: %v", err)
