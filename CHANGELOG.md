@@ -1,3 +1,10 @@
+# [0.11.0](https://github.com/themadorg/madmail/compare/v0.10.3...v0.11.0) (2026-01-20)
+
+
+### Features
+
+* improve binary upgrade mechanism and revert update documentation to manual method ([84fb4b7](https://github.com/themadorg/madmail/commit/84fb4b7dc2db6d41b8d41c3a80a62f3fa60bc334))
+
 # [0.10.0](https://github.com/themadorg/madmail/compare/v0.9.0...v0.10.0) (2026-01-20)
 
 
