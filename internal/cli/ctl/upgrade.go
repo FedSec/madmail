@@ -110,27 +110,48 @@ func performUpgrade(newBinPath string) error {
 	// We ignore error here because the service might not be running or named differently
 	_ = exec.Command("systemctl", "stop", "maddy.service").Run()
 
-	// Perform binary replacement
+	// Perform binary replacement using a temporary file to avoid "text file busy"
 	fmt.Println("🔄 Replacing binary...")
+
+	// Create temp file in the same directory as the target binary
+	tmpDir := filepath.Dir(realBinPath)
+	tmpBin, err := os.CreateTemp(tmpDir, "maddy-upgrade-*")
+	if err != nil {
+		return fmt.Errorf("failed to create temporary binary: %w", err)
+	}
+	tmpPath := tmpBin.Name()
+	defer os.Remove(tmpPath) // Cleanup if we fail
+
 	src, err := os.Open(newBinPath)
 	if err != nil {
+		tmpBin.Close()
 		return err
 	}
 	defer src.Close()
 
-	dst, err := os.OpenFile(realBinPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
-	if err != nil {
-		return fmt.Errorf("failed to open destination binary for writing: %w", err)
-	}
-	defer dst.Close()
-
-	if _, err := io.Copy(dst, src); err != nil {
+	if _, err := io.Copy(tmpBin, src); err != nil {
+		tmpBin.Close()
 		return fmt.Errorf("failed to copy new binary: %w", err)
 	}
-	if err := dst.Sync(); err != nil {
-		return fmt.Errorf("failed to sync destination binary: %w", err)
+
+	if err := tmpBin.Sync(); err != nil {
+		tmpBin.Close()
+		return fmt.Errorf("failed to sync temporary binary: %w", err)
 	}
-	dst.Close()
+	tmpBin.Close()
+
+	// Set permissions
+	if err := os.Chmod(tmpPath, 0755); err != nil {
+		return fmt.Errorf("failed to set permissions on new binary: %w", err)
+	}
+
+	// Atomic rename (or as atomic as it gets)
+	if err := os.Rename(tmpPath, realBinPath); err != nil {
+		// If rename fails (might be cross-device, though we tried to avoid it with tmpDir),
+		// we fallback to removing the target and then renaming/copying.
+		// But usually in /usr/local/bin, it should work.
+		return fmt.Errorf("failed to replace binary: %w", err)
+	}
 
 	fmt.Println("▶️ Starting maddy.service...")
 	if err := exec.Command("systemctl", "start", "maddy.service").Run(); err != nil {

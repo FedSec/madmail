@@ -124,11 +124,11 @@ build() {
 		# This is literally impossible to specify this line of arguments as part of ${GOFLAGS}
 		# using only POSIX sh features (and even with Bash extensions I can't figure it out).
 		go build -trimpath -buildmode pie -tags "$tags osusergo netgo static_build" \
-			-ldflags "-extldflags '-fno-PIC -static' -X \"github.com/themadorg/madmail/framework/config.Version=${version}\"" \
+			-ldflags "-s -w -extldflags '-fno-PIC -static' -X \"github.com/themadorg/madmail/framework/config.Version=${version}\"" \
 			-o "${builddir}/${binary_name}" ${GOFLAGS} ./cmd/maddy
 	else
 		echo "-- Building main server executable ($binary_name)..." >&2
-		go build -tags "$tags" -trimpath -ldflags="-X \"github.com/themadorg/madmail/framework/config.Version=${version}\"" -o "${builddir}/${binary_name}" ${GOFLAGS} ./cmd/maddy
+		go build -tags "$tags" -trimpath -ldflags="-s -w -X \"github.com/themadorg/madmail/framework/config.Version=${version}\"" -o "${builddir}/${binary_name}" ${GOFLAGS} ./cmd/maddy
 	fi
 
 	build_man_pages
