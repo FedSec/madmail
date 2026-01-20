@@ -13,6 +13,7 @@ import time
 import requests
 import random
 import string
+import urllib.parse
 from deltachat_rpc_client.rpc import JsonRpcError
 
 def run_ssh_command(remote, command):
@@ -49,14 +50,18 @@ def run(dc, remotes):
         print("\nStep 1: Testing with JIT ENABLED")
         set_jit(REMOTE1, True)
         
-        # Try to create account on REMOTE1 (should succeed)
         username1 = random_string(8)
         password1 = random_string(16)
         email1 = f"{username1}@[{REMOTE1}]"
-        login_uri1 = f"dclogin:{email1}/?p={password1}&v=1&ih={REMOTE1}&ip=993&sh={REMOTE1}&sp=465&ic=3&ss=default"
         
         print(f"  Attempting login for {email1} (JIT enabled)...")
         acc1 = dc.add_account()
+        
+        # password must be quoted as it may contain special characters
+        # email should NOT be quoted for dclogin scheme
+        enc_pass1 = urllib.parse.quote(password1)
+        login_uri1 = f"dclogin:{email1}?p={enc_pass1}&v=1&ih={REMOTE1}&ip=993&sh={REMOTE1}&sp=465&ic=3&ss=default"
+        
         acc1.set_config_from_qr(login_uri1)
         acc1.start_io()
         
@@ -80,10 +85,12 @@ def run(dc, remotes):
         username2 = random_string(8)
         password2 = random_string(16)
         email2 = f"{username2}@[{REMOTE1}]"
-        login_uri2 = f"dclogin:{email2}/?p={password2}&v=1&ih={REMOTE1}&ip=993&sh={REMOTE1}&sp=465&ic=3&ss=default"
         
         print(f"  Attempting login for {email2} (JIT disabled)...")
         acc2 = dc.add_account()
+        
+        enc_pass2 = urllib.parse.quote(password2)
+        login_uri2 = f"dclogin:{email2}?p={enc_pass2}&v=1&ih={REMOTE1}&ip=993&sh={REMOTE1}&sp=465&ic=3&ss=default"
         
         try:
             # We expect this to fail eventually with "Invalid credentials"
@@ -141,8 +148,12 @@ def run(dc, remotes):
                 # Verify we can login with this account (even with JIT disabled)
                 print(f"  Verifying login for API-created account {new_email}...")
                 acc3 = dc.add_account()
-                # If new_email already has brackets if it's an IP
-                login_uri3 = f"dclogin:{new_email}/?p={new_pw}&v=1&ih={REMOTE1}&ip=993&sh={REMOTE1}&sp=465&ic=3&ss=default"
+                
+                # URL encode only the password as it might contain special characters (from /new API)
+                # the email must remain raw for correct core parsing
+                enc_new_pw = urllib.parse.quote(new_pw)
+                login_uri3 = f"dclogin:{new_email}?p={enc_new_pw}&v=1&ih={REMOTE1}&ip=993&sh={REMOTE1}&sp=465&ic=3&ss=default"
+                
                 acc3.set_config_from_qr(login_uri3)
                 acc3.start_io()
                 

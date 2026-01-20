@@ -41,18 +41,19 @@ from scenarios import (
     test_10_upgrade_mechanism,
     test_11_jit_registration,
 )
+from utils.lxc import LXCManager
 
 REMOTE1 = os.getenv("REMOTE1", "127.0.0.1")
 REMOTE2 = os.getenv("REMOTE2", "127.0.0.1")
 ROOT_DIR = os.getenv("ROOT_DIR", os.getcwd())
 
-def collect_server_logs(test_dir):
+def collect_server_logs(test_dir, remote1, remote2):
     print("Collecting server logs...")
     try:
-        for i, remote in enumerate([REMOTE1, REMOTE2], 1):
+        for i, remote in enumerate([remote1, remote2], 1):
             try:
                 log = subprocess.check_output(
-                    ["ssh", f"root@{remote}", "journalctl -u maddy.service -n 1000 --no-pager"],
+                    ["ssh", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", f"root@{remote}", "journalctl -u maddy.service -n 1000 --no-pager"],
                     timeout=15
                 ).decode('utf-8', errors='ignore')
                 with open(os.path.join(test_dir, f"server{i}_debug.log"), "w") as f:
@@ -78,6 +79,8 @@ def main():
     parser.add_argument("--test-9", action="store_true", help="Run Big File Test (10-70MB)")
     parser.add_argument("--test-10", action="store_true", help="Run Upgrade Mechanism Test")
     parser.add_argument("--test-11", action="store_true", help="Run JIT Registration Test")
+    parser.add_argument("--lxc", action="store_true", help="Run tests in local LXC containers")
+    parser.add_argument("--keep-lxc", action="store_true", help="Keep LXC containers alive after test")
     parser.add_argument("--all", action="store_true", help="Run all tests (default)")
     
     args = parser.parse_args()
@@ -115,7 +118,15 @@ def main():
     acc2 = None
     acc3 = None
     group_chat = None
+    lxc = None
     
+    remote1 = REMOTE1
+    remote2 = REMOTE2
+
+    if args.lxc:
+        lxc = LXCManager()
+        remote1, remote2 = lxc.setup()
+
     try:
         with rpc:
             dc = DeltaChat(rpc)
@@ -126,8 +137,8 @@ def main():
             print("\n" + "="*50)
             print("INITIALIZING: Account Creation")
             print("="*50)
-            acc1 = test_01_account_creation.run(dc, REMOTE1)
-            acc2 = test_01_account_creation.run(dc, REMOTE2)
+            acc1 = test_01_account_creation.run(dc, remote1)
+            acc2 = test_01_account_creation.run(dc, remote2)
             
             if run_all or args.test_1:
                 print("✓ TEST #1 PASSED: Accounts created successfully")
@@ -148,7 +159,7 @@ def main():
                     sender_email=acc1_email,
                     sender_password=acc1_password,
                     receiver_email=acc2_email,
-                    smtp_host=REMOTE1
+                    smtp_host=remote1
                 )
                 print("✓ TEST #2 PASSED: Unencrypted messages correctly rejected")
             
@@ -200,7 +211,7 @@ def main():
                 print("\n" + "="*50)
                 print("TEST #7: Federation (Cross-Server Messaging)")
                 print("="*50)
-                acc3 = test_07_federation.run(rpc, dc, acc1, acc2, REMOTE2, timestamp)
+                acc3 = test_07_federation.run(rpc, dc, acc1, acc2, remote2, timestamp)
                 print("✓ TEST #7 PASSED: Federation test completed successfully")
             
             # ==========================================
@@ -214,18 +225,18 @@ def main():
                 # If we skipped test 7 and need acc3, create it on demand
                 if acc3 is None:
                     print("  Initializing acc3 for No Logging test...")
-                    acc3 = test_01_account_creation.run(dc, REMOTE2)
+                    acc3 = test_01_account_creation.run(dc, remote2)
                     # We might need to do secure join with acc1 if federation messages are tested
                     # but test_08 handles some creation. Let's ensure it has what it needs.
                 
-                test_08_no_logging.run(acc1, acc2, acc3, group_chat, (REMOTE1, REMOTE2))
+                test_08_no_logging.run(acc1, acc2, acc3, group_chat, (remote1, remote2))
                 print("✓ TEST #8 PASSED: No logs generated with logging disabled")
             
             # ==========================================
             # TEST #9: Big File Test
             # ==========================================
             if run_all or args.test_9:
-                test_09_send_bigfile.run(acc1, acc2, test_dir, (REMOTE1, REMOTE2))
+                test_09_send_bigfile.run(acc1, acc2, test_dir, (remote1, remote2))
                 print("✓ TEST #9 PASSED: Big file transfer timing completed")
             
             # ==========================================
@@ -235,14 +246,14 @@ def main():
                 print("\n" + "="*50)
                 print("TEST #10: Upgrade Mechanism")
                 print("="*50)
-                test_10_upgrade_mechanism.run(dc, REMOTE1, test_dir)
+                test_10_upgrade_mechanism.run(dc, remote1, test_dir)
                 print("✓ TEST #10 PASSED: Upgrade/Update signature verification verified")
 
             # ==========================================
             # TEST #11: JIT Registration
             # ==========================================
             if run_all or args.test_11:
-                test_11_jit_registration.run(dc, (REMOTE1, REMOTE2))
+                test_11_jit_registration.run(dc, (remote1, remote2))
                 print("✓ TEST #11 PASSED: JIT registration verified")
 
             # ==========================================
@@ -265,7 +276,15 @@ def main():
     finally:
         rpc_log_file.close()
         # Collect server logs regardless of success
-        collect_server_logs(test_dir)
+        collect_server_logs(test_dir, remote1, remote2)
+        
+        if lxc:
+            if args.keep_lxc:
+                print("\nKeeping LXC containers alive as requested.")
+                print(f"  Server 1: {remote1}")
+                print(f"  Server 2: {remote2}")
+            else:
+                lxc.cleanup()
         
         print(f"\nTest finished. Results in {test_dir}")
         if not success:

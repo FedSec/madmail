@@ -41,7 +41,7 @@ build_all:
 	GOARCH=arm64 CGO_ENABLED=0 sh build.sh build
 
 test:
-	uv run python3 tests/deltachat-test/main.py
+	uv run python3 tests/deltachat-test/main.py --lxc
 
 # Helper to increment version
 bump_version:

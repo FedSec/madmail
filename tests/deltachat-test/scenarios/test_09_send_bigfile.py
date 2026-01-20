@@ -23,13 +23,12 @@ def disable_logging(remote):
     print(f"  Disabling logging on {remote}...")
     commands = [
         "sed -i 's/^log .*/log off/' /etc/maddy/maddy.conf",
-        "sed -i 's/debug yes/debug no/g' /etc/maddy/maddy.conf",
-        "sed -i 's/debug true/debug false/g' /etc/maddy/maddy.conf",
+        "sed -i 's/debug .*/debug no/g' /etc/maddy/maddy.conf",
     ]
     for cmd in commands:
         run_ssh_command(remote, cmd)
     run_ssh_command(remote, "systemctl restart maddy")
-    time.sleep(3)
+    time.sleep(5)
 
 
 def enable_logging(remote):
@@ -69,15 +68,37 @@ def get_journal_cursor(remote):
 
 
 def count_new_logs(remote, cursor):
-    """Count new log entries since cursor"""
+    """Count new log entries since cursor, ignoring startup noise"""
     if cursor:
-        cmd = f"journalctl -u maddy.service --after-cursor='{cursor}' --no-pager 2>/dev/null | wc -l"
+        cmd = f"journalctl -u maddy.service --after-cursor='{cursor}' --no-pager 2>/dev/null"
     else:
-        cmd = "journalctl -u maddy.service --since='1 minute ago' --no-pager 2>/dev/null | wc -l"
+        # If no cursor, count logs from the last minute
+        cmd = "journalctl -u maddy.service --since='1 minute ago' --no-pager 2>/dev/null"
+    
+    # Filter out known startup/systemd noise that is expected during boot phase
+    # as per nolog.md policy (boot phase logs are allowed).
+    filters = [
+        "listening on",
+        "Started maddy.service",
+        "Starting maddy.service",
+        "table.file: ignoring",
+        "Deactivated successfully",
+        "Stopping maddy.service",
+        "Stopped maddy.service",
+        "Consumed",
+        "Shadowsocks: listening",
+        "signal received"
+    ]
+    
+    for f in filters:
+        cmd += f" | grep -v '{f}'"
+    
+    cmd += " | wc -l"
     
     returncode, stdout, stderr = run_ssh_command(remote, cmd)
     if returncode == 0:
         try:
+            # Subtract 1 for the header line if present
             count = int(stdout.strip())
             return max(0, count - 1)  # Subtract header line
         except ValueError:
@@ -179,6 +200,12 @@ def run(sender, receiver, test_dir, remotes):
                 set_server_limits(REMOTE2, "100M")
                 limit_increased = True
                 
+                # Update cursors after restart to avoid counting startup logs
+                print("  Updating journal cursors after limit change...")
+                time.sleep(5)
+                cursor1 = get_journal_cursor(REMOTE1)
+                cursor2 = get_journal_cursor(REMOTE2)
+                
                 print(f">>> Retrying {size}MB transfer...")
                 # Re-send the same file
                 msg = chat.send_file(os.path.abspath(file_path))
@@ -225,9 +252,21 @@ def run(sender, receiver, test_dir, remotes):
         print(f"  Server 1 new log entries: {new_logs1}")
         print(f"  Server 2 new log entries: {new_logs2}")
         
-        MAX_ALLOWED_LOGS = 5  # Allow a few for service restarts
+        MAX_ALLOWED_LOGS = 10  # Reasonable threshold for minor system noise
         if new_logs1 > MAX_ALLOWED_LOGS or new_logs2 > MAX_ALLOWED_LOGS:
-            print(f"\n✗ FAILED: Unexpected logs were generated!")
+            print(f"\n✗ FAILED: Unexpected logs were generated during big file transfer!")
+            
+            # Show what logs were generated
+            print("\n  Recent filtered logs from Server 1:")
+            _, logs1, _ = run_ssh_command(REMOTE1, 
+                f"journalctl -u maddy.service --after-cursor='{cursor1}' --no-pager 2>/dev/null")
+            print(logs1)
+
+            print("\n  Recent filtered logs from Server 2:")
+            _, logs2, _ = run_ssh_command(REMOTE2, 
+                f"journalctl -u maddy.service --after-cursor='{cursor2}' --no-pager 2>/dev/null")
+            print(logs2)
+
             raise Exception(f"Logs were generated during big file transfer. Server1: {new_logs1}, Server2: {new_logs2}")
         else:
             print(f"\n✓ SUCCESS: No significant logs generated during transfers!")

@@ -17,7 +17,10 @@ def run(dc, domain):
     
     # Using dclogin format to explicitly set hosts and bypass DNS lookups for imap.<ip>
     # The email part must have brackets for IP domains, but ih/sh must not.
-    login_uri = f"dclogin:{username}@{email_domain}/?p={password}&v=1&ih={domain}&ip=993&sh={domain}&sp=465&ic=3&ss=default"
+    # Quoting ONLY the password, NOT the email, as core parsing is sensitive to IP brackets.
+    import urllib.parse
+    enc_pass = urllib.parse.quote(password)
+    login_uri = f"dclogin:{username}@{email_domain}?p={enc_pass}&v=1&ih={domain}&ip=993&sh={domain}&sp=465&ic=3&ss=default"
     
     account.set_config_from_qr(login_uri)
     account.set_config("displayname", f"Test User {username}")
