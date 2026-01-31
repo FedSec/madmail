@@ -1,3 +1,13 @@
+## [0.12.2](https://github.com/themadorg/madmail/compare/v0.12.1...v0.12.2) (2026-01-31)
+
+
+### Bug Fixes
+
+* **config:** refine maddy configuration and storage tables ([d97bdb7](https://github.com/themadorg/madmail/commit/d97bdb763d5714d0aae4f3603fd58d79ce94129d))
+* **core:** vendor go-imap-sql and go-imap-mess ([d3d4589](https://github.com/themadorg/madmail/commit/d3d45895ceda5a232e92739e085efed7a7c39268))
+* **deps:** update and sync dependencies ([617454f](https://github.com/themadorg/madmail/commit/617454ffe61e4e97ddbb1b060ceb59ac526d9f6c))
+* **tests:** implement comprehensive lxc stress testing ([cdd4ae7](https://github.com/themadorg/madmail/commit/cdd4ae745aa78b44e27c8f8c7e03f150898b4bee))
+
 ## [0.12.1](https://github.com/themadorg/madmail/compare/v0.12.0...v0.12.1) (2026-01-24)
 
 
