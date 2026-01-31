@@ -40,6 +40,7 @@ from scenarios import (
     test_09_send_bigfile,
     test_10_upgrade_mechanism,
     test_11_jit_registration,
+    test_12_smtp_imap_idle,
 )
 from utils.lxc import LXCManager
 from stress import run_stress
@@ -80,6 +81,7 @@ def main():
     parser.add_argument("--test-9", action="store_true", help="Run Big File Test (10-70MB)")
     parser.add_argument("--test-10", action="store_true", help="Run Upgrade Mechanism Test")
     parser.add_argument("--test-11", action="store_true", help="Run JIT Registration Test")
+    parser.add_argument("--test-12", action="store_true", help="Run SMTP/IMAP IDLE Test (local server)")
     parser.add_argument("--lxc", action="store_true", help="Run tests in local LXC containers")
     parser.add_argument("--keep-lxc", action="store_true", help="Keep LXC containers alive after test")
     parser.add_argument("--all", action="store_true", help="Run all tests (default)")
@@ -94,7 +96,7 @@ def main():
     # If no specific tests selected, run all
     run_all = args.all or not any([
         args.test_1, args.test_2, args.test_3, args.test_4, 
-        args.test_5, args.test_6, args.test_7, args.test_8, args.test_9, args.test_10, args.test_11
+        args.test_5, args.test_6, args.test_7, args.test_8, args.test_9, args.test_10, args.test_11, args.test_12
     ])
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -150,7 +152,10 @@ def main():
     
     if args.lxc:
         lxc = LXCManager()
-        remote1, remote2 = lxc.setup()
+        ips = lxc.setup()
+        remote1 = ips[0] if len(ips) > 0 else remote1
+        remote2 = ips[1] if len(ips) > 1 else remote2
+
 
     try:
         with rpc:
@@ -280,6 +285,14 @@ def main():
             if run_all or args.test_11:
                 test_11_jit_registration.run(dc, (remote1, remote2))
                 print("✓ TEST #11 PASSED: JIT registration verified")
+
+            # ==========================================
+            # TEST #12: SMTP/IMAP IDLE Test (local server)
+            # ==========================================
+            if run_all or args.test_12:
+                # This test runs its own local maddy server
+                test_12_smtp_imap_idle.run(test_dir=test_dir)
+                print("✓ TEST #12 PASSED: SMTP/IMAP IDLE test verified")
 
             # ==========================================
             # ALL TESTS COMPLETE
