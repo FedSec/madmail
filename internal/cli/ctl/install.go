@@ -514,6 +514,7 @@ func installCommand(ctx *cli.Context) error {
 		if ctx.IsSet("ip") {
 			config.PublicIP = ctx.String("ip")
 			config.PrimaryDomain = auth.WrapIP(config.PublicIP)
+			config.LocalDomains = fmt.Sprintf("$(primary_domain) %s", config.PublicIP)
 			config.A = config.PublicIP
 			config.Hostname = ctx.String("ip")
 			config.SkipPrompts = true

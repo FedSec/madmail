@@ -275,6 +275,11 @@ or other buffering takes effect.`,
 							EnvVars: []string{"MADDY_CFGBLOCK"},
 							Value:   "local_mailboxes",
 						},
+						&cli.BoolFlag{
+							Name:    "yes",
+							Aliases: []string{"y"},
+							Usage:   "Don't ask for confirmation",
+						},
 					},
 					Action: func(ctx *cli.Context) error {
 						be, err := openStorage(ctx)
@@ -283,6 +288,82 @@ or other buffering takes effect.`,
 						}
 						defer closeIfNeeded(be)
 						return imapAcctPurge(be, ctx)
+					},
+				},
+				{
+					Name:  "purge-all",
+					Usage: "Delete ALL messages for ALL storage accounts",
+					Flags: []cli.Flag{
+						&cli.StringFlag{
+							Name:    "cfg-block",
+							Usage:   "Module configuration block to use",
+							EnvVars: []string{"MADDY_CFGBLOCK"},
+							Value:   "local_mailboxes",
+						},
+						&cli.BoolFlag{
+							Name:    "yes",
+							Aliases: []string{"y"},
+							Usage:   "Don't ask for confirmation",
+						},
+					},
+					Action: func(ctx *cli.Context) error {
+						be, err := openStorage(ctx)
+						if err != nil {
+							return err
+						}
+						defer closeIfNeeded(be)
+						return imapAcctPurgeAll(be, ctx)
+					},
+				},
+				{
+					Name:  "purge-read",
+					Usage: "Delete all READ messages for ALL storage accounts",
+					Flags: []cli.Flag{
+						&cli.StringFlag{
+							Name:    "cfg-block",
+							Usage:   "Module configuration block to use",
+							EnvVars: []string{"MADDY_CFGBLOCK"},
+							Value:   "local_mailboxes",
+						},
+						&cli.BoolFlag{
+							Name:    "yes",
+							Aliases: []string{"y"},
+							Usage:   "Don't ask for confirmation",
+						},
+					},
+					Action: func(ctx *cli.Context) error {
+						be, err := openStorage(ctx)
+						if err != nil {
+							return err
+						}
+						defer closeIfNeeded(be)
+						return imapAcctPurgeRead(be, ctx)
+					},
+				},
+				{
+					Name:      "prune-unread",
+					Usage:     "Delete unread messages older than RETENTION period for ALL storage accounts",
+					ArgsUsage: "RETENTION",
+					Flags: []cli.Flag{
+						&cli.StringFlag{
+							Name:    "cfg-block",
+							Usage:   "Module configuration block to use",
+							EnvVars: []string{"MADDY_CFGBLOCK"},
+							Value:   "local_mailboxes",
+						},
+						&cli.BoolFlag{
+							Name:    "yes",
+							Aliases: []string{"y"},
+							Usage:   "Don't ask for confirmation",
+						},
+					},
+					Action: func(ctx *cli.Context) error {
+						be, err := openStorage(ctx)
+						if err != nil {
+							return err
+						}
+						defer closeIfNeeded(be)
+						return imapAcctPruneUnread(be, ctx)
 					},
 				},
 				{
@@ -687,7 +768,7 @@ func imapAcctPurge(be module.Storage, ctx *cli.Context) error {
 		return cli.Exit("Error: USERNAME is required", 2)
 	}
 
-	if !clitools2.Confirmation(fmt.Sprintf("Are you sure you want to delete ALL messages for %s?", rawUsername), false) {
+	if !ctx.Bool("yes") && !clitools2.Confirmation(fmt.Sprintf("Are you sure you want to delete ALL messages for %s?", rawUsername), false) {
 		return errors.New("Cancelled")
 	}
 
@@ -697,6 +778,55 @@ func imapAcctPurge(be module.Storage, ctx *cli.Context) error {
 		err = mbe.PurgeIMAPMsgs(auth.NormalizeUsername(rawUsername))
 	}
 	return err
+}
+
+func imapAcctPurgeAll(be module.Storage, ctx *cli.Context) error {
+	mbe, ok := be.(module.ManageableStorage)
+	if !ok {
+		return cli.Exit("Error: storage backend does not support accounts management using maddy command", 2)
+	}
+
+	if !ctx.Bool("yes") && !clitools2.Confirmation("Are you sure you want to delete ALL messages for ALL accounts?", false) {
+		return errors.New("Cancelled")
+	}
+
+	return mbe.PurgeAllIMAPMsgs()
+}
+
+func imapAcctPurgeRead(be module.Storage, ctx *cli.Context) error {
+	mbe, ok := be.(module.ManageableStorage)
+	if !ok {
+		return cli.Exit("Error: storage backend does not support accounts management using maddy command", 2)
+	}
+
+	if !ctx.Bool("yes") && !clitools2.Confirmation("Are you sure you want to delete all READ messages for ALL accounts?", false) {
+		return errors.New("Cancelled")
+	}
+
+	return mbe.PurgeReadIMAPMsgs()
+}
+
+func imapAcctPruneUnread(be module.Storage, ctx *cli.Context) error {
+	mbe, ok := be.(module.ManageableStorage)
+	if !ok {
+		return cli.Exit("Error: storage backend does not support accounts management using maddy command", 2)
+	}
+
+	retentionStr := ctx.Args().First()
+	if retentionStr == "" {
+		return cli.Exit("Error: RETENTION is required (e.g. 720h)", 2)
+	}
+
+	retention, err := time.ParseDuration(retentionStr)
+	if err != nil {
+		return fmt.Errorf("invalid retention value: %w", err)
+	}
+
+	if !ctx.Bool("yes") && !clitools2.Confirmation(fmt.Sprintf("Are you sure you want to delete ALL UNREAD messages older than %s for ALL accounts?", retentionStr), false) {
+		return errors.New("Cancelled")
+	}
+
+	return mbe.PruneUnreadIMAPMsgs(retention)
 }
 func imapAcctPruneUnused(be module.Storage, ctx *cli.Context) error {
 	mbe, ok := be.(module.ManageableStorage)

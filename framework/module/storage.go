@@ -60,4 +60,7 @@ type ManageableStorage interface {
 	GetDefaultQuota() int64
 	SetDefaultQuota(max int64) error
 	GetStat() (totalStorage int64, accountsCount int, err error)
+	PurgeAllIMAPMsgs() error
+	PurgeReadIMAPMsgs() error
+	PruneUnreadIMAPMsgs(retention time.Duration) error
 }

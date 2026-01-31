@@ -69,6 +69,19 @@ func (store *Storage) PurgeIMAPMsgs(username string) error {
 	return store.GORMDB.Table("msgs").Where("\"mboxId\" IN (SELECT id FROM mboxes WHERE uid IN (SELECT id FROM users WHERE username = ?))", username).Delete(nil).Error
 }
 
+func (store *Storage) PurgeAllIMAPMsgs() error {
+	return store.GORMDB.Exec("DELETE FROM msgs").Error
+}
+
+func (store *Storage) PurgeReadIMAPMsgs() error {
+	return store.GORMDB.Table("msgs").Where("seen = 1").Delete(nil).Error
+}
+
+func (store *Storage) PruneUnreadIMAPMsgs(retention time.Duration) error {
+	cutoff := time.Now().Add(-retention).Unix()
+	return store.GORMDB.Table("msgs").Where("seen = 0 AND date < ?", cutoff).Delete(nil).Error
+}
+
 func (store *Storage) GetIMAPAcct(accountName string) (backend.User, error) {
 	return store.Back.GetUser(accountName)
 }

@@ -28,6 +28,7 @@ package imapsql
 import (
 	"context"
 	"crypto/sha1"
+	"database/sql"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -580,11 +581,9 @@ func (store *Storage) PruneUnusedAccounts(retention time.Duration) error {
 }
 
 func (store *Storage) GetStat() (totalStorage int64, accountsCount int, err error) {
-	store.GORMDB.Table("msgs").Select("SUM(bodylen)").Scan(&totalStorage)
-	if totalStorage == 0 {
-		// body_len might be bodylen or body_len depending on schema version
-		store.GORMDB.Table("msgs").Select("SUM(body_len)").Scan(&totalStorage)
-	}
+	var total sql.NullInt64
+	store.GORMDB.Table("msgs").Select("SUM(bodylen)").Scan(&total)
+	totalStorage = total.Int64
 
 	var count int64
 	store.GORMDB.Table("users").Count(&count)
