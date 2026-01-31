@@ -44,7 +44,7 @@ def run(dc, domain):
     max_wait = 60
     start_time = time.time()
     while time.time() - start_time < max_wait:
-        event = account.wait_for_event(timeout=1.0)
+        event = account.wait_for_event()
         if event and event.kind == EventType.IMAP_INBOX_IDLE:
             addr = account.get_config("addr")
             print(f"✓ Account {addr} is now idle and ready.")

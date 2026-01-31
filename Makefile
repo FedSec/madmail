@@ -75,11 +75,11 @@ push: build
 publish: build_all
 	@bash publish.sh $(ARGS)
 
-sign_all:
-	@echo "🔏 Signing binaries with local private key..."
-	@if [ -f $(BINARY_AMD64) ]; then uv run internal/cli/clitools/sign.py $(BINARY_AMD64) ../imp/private_key.hex; fi
-	@if [ -f $(BINARY_ARM64) ]; then uv run internal/cli/clitools/sign.py $(BINARY_ARM64) ../imp/private_key.hex; fi
-	@if [ -f $(BINARY) ]; then uv run internal/cli/clitools/sign.py $(BINARY) ../imp/private_key.hex; fi
+sign_all: build_all
+	@echo "🔏 Signing binaries..."
+	@if [ -f $(BINARY_AMD64) ] && [ -n "$(PRIV_KEY)" ]; then uv run internal/cli/clitools/sign.py $(BINARY_AMD64) $(PRIV_KEY); fi
+	@if [ -f $(BINARY_ARM64) ] && [ -n "$(PRIV_KEY)" ]; then uv run internal/cli/clitools/sign.py $(BINARY_ARM64) $(PRIV_KEY); fi
+	@if [ -f $(BINARY) ] && [ -n "$(PRIV_KEY)" ]; then uv run internal/cli/clitools/sign.py $(BINARY) $(PRIV_KEY); fi
 
 
 # Logs
