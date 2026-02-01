@@ -1,3 +1,10 @@
+## [0.12.5](https://github.com/themadorg/madmail/compare/v0.12.4...v0.12.5) (2026-02-01)
+
+
+### Bug Fixes
+
+* **privacy:** ensure all imap logs respect "No Log Policy" by using managed logger ([9059763](https://github.com/themadorg/madmail/commit/9059763653e1c5fdf97c5f54d1aa29a42a13357a))
+
 ## [0.12.4](https://github.com/themadorg/madmail/compare/v0.12.3...v0.12.4) (2026-01-31)
 
 
