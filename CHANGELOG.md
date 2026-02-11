@@ -1,3 +1,15 @@
+# [0.13.0](https://github.com/themadorg/madmail/compare/v0.12.8...v0.13.0) (2026-02-11)
+
+
+### Bug Fixes
+
+* add version ([89b46f6](https://github.com/themadorg/madmail/commit/89b46f68e0c117bb1245764f293d77aca84cea83))
+
+
+### Features
+
+* DKIM HTTPS publishing and deploy improvements ([c94327d](https://github.com/themadorg/madmail/commit/c94327d25468369e3d5ae5a937a569d1de209c9b))
+
 ## [0.12.8](https://github.com/themadorg/madmail/compare/v0.12.7...v0.12.8) (2026-02-04)
 
 
