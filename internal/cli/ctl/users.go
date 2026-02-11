@@ -70,6 +70,26 @@ IMAP access - IMAP account should be also created using 'imap-acct create' subco
 					},
 				},
 				{
+					Name:  "count",
+					Usage: "Count number of registered users",
+					Flags: []cli.Flag{
+						&cli.StringFlag{
+							Name:    "cfg-block",
+							Usage:   "Module configuration block to use",
+							EnvVars: []string{"MADDY_CFGBLOCK"},
+							Value:   "local_authdb",
+						},
+					},
+					Action: func(ctx *cli.Context) error {
+						be, err := openUserDB(ctx)
+						if err != nil {
+							return err
+						}
+						defer closeIfNeeded(be)
+						return usersCount(be, ctx)
+					},
+				},
+				{
 					Name:  "create",
 					Usage: "Create user account",
 					Description: `Reads password from stdin.
@@ -576,4 +596,14 @@ func usersPassword(be module.PlainUserDB, ctx *cli.Context) error {
 	}
 
 	return be.SetUserPassword(username, pass)
+}
+
+func usersCount(be module.PlainUserDB, ctx *cli.Context) error {
+	list, err := be.ListUsers()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("%d\n", len(list))
+	return nil
 }
