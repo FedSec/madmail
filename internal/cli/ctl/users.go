@@ -604,7 +604,6 @@ func usersCount(be module.PlainUserDB, ctx *cli.Context) error {
 		return err
 	}
 
-	count := len(list)
-	fmt.Printf("%d\n", count)
+	fmt.Printf("%d\n", len(list))
 	return nil
 }
