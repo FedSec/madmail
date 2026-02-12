@@ -7,6 +7,24 @@ For installation, configuration, and detailed guides, please refer to the [**Doc
 > [!IMPORTANT]
 > Parts of this project are developed with AI assistance. Read our [**AI Disclosure & Security Model**](./docs/ai-disclosure.md) for more details.
 
+## Common Commands
+
+### Counting registered users
+
+You can check how many users are registered on your mail server:
+
+```bash
+maddy creds count
+```
+
+This will show a number like `42` which tells you how many users exist.
+
+If you use a custom database configuration, add the `--cfg-block` flag:
+
+```bash
+maddy creds count --cfg-block custom_authdb
+```
+
 ## Resources
 - [GitHub Releases](https://github.com/themadorg/madmail/releases)
 - [Telegram Channel](https://t.me/the_madmail)
